@@ -542,6 +542,11 @@ table.data .shrink {
 table.data .nowrap {
   white-space: nowrap;
 }
+/* Coluna que precisa de espaco para o nome nao quebrar em pedacos. */
+table.data .col-md {
+  min-width: 10rem;
+}
+
 /* Campo secundario longo nao pode esticar a linha inteira. */
 table.data .clip {
   max-width: 16ch;
@@ -862,6 +867,27 @@ a.entity-name:hover {
   height: 17px;
   accent-color: var(--terracota);
   cursor: pointer;
+}
+
+/* Situacao de conta de anuncios e de sincronizacao */
+.badge--account-active,
+.badge--sync-ok {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: rgba(63, 125, 82, 0.25);
+}
+.badge--account-paused {
+  color: var(--terracota-dark);
+  background: var(--terracota-soft);
+  border-color: rgba(184, 95, 64, 0.22);
+}
+.badge--account-archived {
+  color: var(--pedra);
+}
+.badge--sync-failed {
+  color: var(--error);
+  background: var(--error-soft);
+  border-color: rgba(178, 59, 46, 0.25);
 }
 
 /* ── Resumo da fila por situacao ─────────────────────────── */

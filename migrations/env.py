@@ -12,6 +12,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import create_engine, pool
 
+import app.ads.repository  # noqa: F401  (registers the "ads_" tables and "sync_log")
 import app.clients.repository  # noqa: F401  (registers "client")
 import app.hunter.repository  # noqa: F401  (registers "hunter_search", "hunter_prospect")
 import app.shared.jobs.models  # noqa: F401  (registers "job")

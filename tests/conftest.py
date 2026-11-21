@@ -128,7 +128,12 @@ async def session(database_url: str) -> AsyncIterator[AsyncSession]:
 
 @pytest.fixture
 async def clean_tables(session: AsyncSession) -> AsyncIterator[AsyncSession]:
-    await session.execute(text("TRUNCATE app_user, client, job, hunter_search, hunter_prospect"))
+    await session.execute(
+        text(
+            "TRUNCATE app_user, client, job, hunter_search, hunter_prospect,"
+            " ads_account, ads_campaign, ads_campaign_daily, sync_log"
+        )
+    )
     await session.commit()
     yield session
     await session.rollback()
