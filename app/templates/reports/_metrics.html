@@ -1,0 +1,48 @@
+{#
+  Como um número do resumo e a sua variação aparecem. Fica num arquivo só
+  para a tela e o PDF mostrarem exatamente a mesma leitura.
+
+  A cor vem de `metric.is_good`, não da direção: custo por resultado caindo
+  é notícia boa, e investimento subindo não é boa nem ruim.
+#}
+
+{% macro amount(metric) -%}
+  {%- if metric.value is none -%}
+    —
+  {%- elif metric.is_money -%}
+    {{ metric.value|brl }}
+  {%- else -%}
+    {{ metric.value|num }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro previous_amount(metric) -%}
+  {%- if metric.previous is none -%}
+    —
+  {%- elif metric.is_money -%}
+    {{ metric.previous|brl }}
+  {%- else -%}
+    {{ metric.previous|num }}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro delta(metric) -%}
+  {%- set change = metric.change -%}
+  {%- if change is none -%}
+    <span class="delta">sem base de comparação</span>
+  {%- else -%}
+    {%- if metric.is_good is none -%}
+      {%- set tone = 'delta--flat' -%}
+    {%- elif metric.is_good -%}
+      {%- set tone = 'delta--good' -%}
+    {%- else -%}
+      {%- set tone = 'delta--bad' -%}
+    {%- endif -%}
+    <span class="delta {{ tone }}">
+      <span class="delta-arrow" aria-hidden="true">
+        {{ '▲' if metric.direction == 'up' else ('▼' if metric.direction == 'down' else '=') }}
+      </span>
+      {{- '+' if change > 0 else '' }}{{ change|pct_br }}
+    </span>
+  {%- endif -%}
+{%- endmacro %}

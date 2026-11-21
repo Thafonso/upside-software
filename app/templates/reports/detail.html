@@ -1,0 +1,134 @@
+{% extends "base.html" %} {% import "reports/_metrics.html" as fmt %} {% block
+title %}{{ report.title }} — {{ snapshot.client_name }}{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">{{ snapshot.client_name }} · {{ report.period.label }}</h1>
+    <p class="page-subtitle">
+      Gerado em {{ report.created_at|datetime_br }}{% if report.generated_by %}
+      por {{ report.generated_by }}{% endif %}. Resultado contado:
+      {{ snapshot.result_label|lower }}.
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--quiet" href="/reports/clients/{{ report.client_id }}">Histórico</a>
+    <a class="btn btn--primary" href="/reports/{{ report.id }}/pdf">Baixar PDF</a>
+  </div>
+</header>
+
+{% if just_generated %}
+<p class="alert alert--ok">Relatório gerado. O PDF já pode ser baixado.</p>
+{% endif %}
+
+{% if snapshot.partial %}
+<p class="report-note">
+  Este relatório foi gerado com o mês ainda em andamento, então cobre só os dias
+  que já tinham dados. Os números não mudam mais: gere outro quando o mês
+  fechar.
+</p>
+{% endif %}
+
+{% if snapshot.has_data %}
+<div class="kpis">
+  {% for metric in snapshot.metrics %}
+  <div class="kpi">
+    <span class="kpi-label">{{ metric.label }}</span>
+    <span class="kpi-value">{{ fmt.amount(metric) }}</span>
+    <span class="kpi-note">
+      {{ fmt.delta(metric) }}
+      <span class="delta-base">
+        {{ snapshot.previous_period.label }}: {{ fmt.previous_amount(metric) }}
+      </span>
+    </span>
+  </div>
+  {% endfor %}
+</div>
+
+<section class="charts">
+  <figure class="chart-card">
+    <figcaption class="chart-title">Investimento por dia</figcaption>
+    <div class="chart-box"><canvas id="chart-spend" height="180"></canvas></div>
+  </figure>
+
+  <figure class="chart-card">
+    <figcaption class="chart-title">Resultados por dia</figcaption>
+    <div class="chart-box"><canvas id="chart-results" height="180"></canvas></div>
+  </figure>
+</section>
+
+<section class="form-section">
+  <h2 class="form-section-title">Por campanha</h2>
+  {% if snapshot.campaigns %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Campanha</th>
+          <th scope="col" class="num">Investimento</th>
+          <th scope="col" class="num">Resultados</th>
+          <th scope="col" class="num">Custo por resultado</th>
+          <th scope="col" class="num">Cliques</th>
+          <th scope="col" class="num">Impressões</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for campaign in snapshot.campaigns %}
+        <tr>
+          <td>
+            <span class="entity-name">{{ campaign.name }}</span>
+            <span class="entity-meta">{{ campaign.status_label }}</span>
+          </td>
+          <td class="num">{{ campaign.spend|brl }}</td>
+          <td class="num">{{ campaign.results|num }}</td>
+          <td class="num">
+            {% if campaign.cost_per_result %}{{ campaign.cost_per_result|brl }}
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td class="num">{{ campaign.link_clicks|num }}</td>
+          <td class="num">{{ campaign.impressions|num }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="empty">
+      <p class="empty-title">Nenhuma campanha com gasto no mês</p>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    <p class="empty-title">Mês sem dados</p>
+    <p>
+      {% if snapshot.account_ids %} A conta de anúncios está vinculada, mas não
+      havia métricas para {{ report.period.label }} quando o relatório foi
+      gerado. {% else %} Este cliente não tinha conta de anúncios vinculada
+      quando o relatório foi gerado. {% endif %} O PDF sai com a capa, o aviso e
+      o comentário.
+    </p>
+  </div>
+</div>
+{% endif %}
+
+{% if snapshot.comment %}
+<section class="form-section">
+  <h2 class="form-section-title">Comentário do gestor</h2>
+  <p class="prose">{{ snapshot.comment }}</p>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if snapshot.has_data %}
+<script type="application/json" id="chart-data">{{ chart|tojson }}</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  defer
+></script>
+<script src="/static/js/charts.js" defer></script>
+{% endif %}
+{% endblock %}

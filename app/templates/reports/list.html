@@ -1,0 +1,70 @@
+{% extends "base.html" %} {% block title %}Relatórios{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Relatórios</h1>
+    <p class="page-subtitle">
+      Um relatório por mês, por cliente. Os números são congelados no momento em
+      que o relatório é gerado, então o PDF continua dizendo o mesmo quando for
+      reaberto.
+    </p>
+  </div>
+</header>
+
+{% if rows %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Cliente</th>
+        <th scope="col" class="num">Relatórios</th>
+        <th scope="col">Último mês</th>
+        <th scope="col">Gerado em</th>
+        <th scope="col" class="shrink"><span class="sr-only">Abrir</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>
+          <a class="entity-name" href="/reports/clients/{{ row.client_id }}">
+            {{ row.client_name }}
+          </a>
+          {% if not row.has_reports %}
+          <span class="entity-meta">nenhum relatório ainda</span>
+          {% endif %}
+        </td>
+        <td class="num">{{ row.total|num }}</td>
+        <td>
+          {% if row.latest_period %}{{ row.latest_period.label }}
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td>
+          {% if row.latest_at %}{{ row.latest_at|datetime_br }}
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td class="shrink">
+          <a class="btn btn--quiet btn--sm" href="/reports/clients/{{ row.client_id }}">
+            {{ 'Abrir' if row.has_reports else 'Gerar' }}
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    <p class="empty-title">Nenhum cliente cadastrado</p>
+    <p>
+      O relatório mensal é feito a partir das campanhas de um cliente. Cadastre o
+      cliente e vincule a conta de anúncios dele para começar.
+    </p>
+    {% if user.is_admin %}
+    <a class="btn btn--primary" href="/clients/new">Cadastrar um cliente</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

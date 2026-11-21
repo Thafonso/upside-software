@@ -2,14 +2,15 @@
 root_package = app
 include_external_packages = True
 
-# Each new feature module (hunter, ads, reports) must be added to the
-# contracts below as soon as its package is created.
+# Each feature module (hunter, ads, reports) appears in the contracts below as
+# soon as its package is created.
 
 # CLAUDE.md asks for an independence contract between the feature modules,
 # and also says they talk to each other through the owner's public API.
-# Turning a prospect into a client needs that call, so the rule below is
-# the same intent, stated precisely: app.hunter may import app.clients (the
-# package, which is the public API) and nothing inside it.
+# Turning a prospect into a client needs that call, and so does a report
+# reading its numbers from the ads module, so the rules below are the same
+# intent stated precisely: a module may import another module's *package*
+# (which is its public API) and nothing inside it.
 
 [importlinter:contract:clients-depends-on-no-one]
 name = The clients module never imports another feature module
@@ -19,6 +20,7 @@ source_modules =
 forbidden_modules =
     app.hunter
     app.ads
+    app.reports
 
 [importlinter:contract:hunter-and-ads-are-independent]
 name = The hunter and the ads module never import each other
@@ -27,12 +29,29 @@ modules =
     app.hunter
     app.ads
 
+[importlinter:contract:hunter-ignores-reports]
+name = The hunter module never imports the reports module
+type = forbidden
+source_modules =
+    app.hunter
+forbidden_modules =
+    app.reports
+
+[importlinter:contract:ads-ignores-reports]
+name = The ads module never imports the reports module
+type = forbidden
+source_modules =
+    app.ads
+forbidden_modules =
+    app.reports
+
 [importlinter:contract:only-through-the-clients-api]
 name = Other modules reach the clients module only through its public API
 type = forbidden
 source_modules =
     app.hunter
     app.ads
+    app.reports
 forbidden_modules =
     app.clients.api
     app.clients.domain
@@ -40,6 +59,22 @@ forbidden_modules =
     app.clients.repository
     app.clients.service
     app.clients.web
+allow_indirect_imports = True
+
+[importlinter:contract:only-through-the-ads-api]
+name = The reports module reaches the ads module only through its public API
+type = forbidden
+source_modules =
+    app.reports
+forbidden_modules =
+    app.ads.api
+    app.ads.adapters
+    app.ads.domain
+    app.ads.jobs
+    app.ads.ports
+    app.ads.repository
+    app.ads.service
+    app.ads.web
 allow_indirect_imports = True
 
 [importlinter:contract:shared-is-standalone]
@@ -51,6 +86,7 @@ forbidden_modules =
     app.clients
     app.hunter
     app.ads
+    app.reports
 
 [importlinter:contract:feature-modules-ignore-entrypoints]
 name = Feature modules never import the process entrypoints
@@ -59,6 +95,7 @@ source_modules =
     app.clients
     app.hunter
     app.ads
+    app.reports
 forbidden_modules =
     app.main
     app.worker
