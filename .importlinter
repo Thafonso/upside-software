@@ -10,6 +10,7 @@ name = Feature modules never import each other
 type = independence
 modules =
     app.clients
+    app.hunter
 
 [importlinter:contract:shared-is-standalone]
 name = app.shared never imports a feature module
@@ -18,12 +19,14 @@ source_modules =
     app.shared
 forbidden_modules =
     app.clients
+    app.hunter
 
 [importlinter:contract:feature-modules-ignore-entrypoints]
 name = Feature modules never import the process entrypoints
 type = forbidden
 source_modules =
     app.clients
+    app.hunter
 forbidden_modules =
     app.main
     app.worker

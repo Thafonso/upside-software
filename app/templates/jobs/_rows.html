@@ -1,0 +1,84 @@
+{# Fragmento HTMX: resumo por situação + tabela de jobs. #}
+<div class="tally">
+  {% for item in statuses %}
+  <span class="tally-item">
+    <span class="badge badge--{{ item.value }}">{{ item.label }}</span>
+    <strong>{{ counts[item] | num }}</strong>
+  </span>
+  {% endfor %}
+</div>
+
+{% if jobs %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Tipo</th>
+        <th scope="col" class="shrink">Situação</th>
+        <th scope="col" class="num">Tentativas</th>
+        <th scope="col">Quando</th>
+        <th scope="col">Último erro</th>
+        <th scope="col" class="shrink"><span class="sr-only">Ações</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr>
+        <td>
+          <span class="job-type">{{ job.type }}</span>
+          <span class="entity-meta">{{ job.id }}</span>
+        </td>
+        <td class="shrink">
+          <span class="badge badge--{{ job.status.value }}">{{ job.status_label }}</span>
+        </td>
+        <td class="num">{{ job.attempts_label }}</td>
+        <td>
+          {{ job.created_at|datetime_br }}
+          {% if job.status.value == 'queued' %}
+          <span class="entity-meta">roda {{ job.run_after|datetime_br }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if job.short_error %}
+          <span class="error-text" title="{{ job.last_error }}">{{ job.short_error }}</span>
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+        </td>
+        <td class="shrink">
+          {% if job.can_requeue %}
+          <form
+            hx-post="/admin/jobs/{{ job.id }}/requeue"
+            hx-target="#jobs-results"
+            hx-swap="innerHTML"
+          >
+            <input type="hidden" name="status" value="{{ status }}" />
+            <input type="hidden" name="job_type" value="{{ job_type }}" />
+            <button class="btn btn--quiet btn--sm" type="submit">Reenfileirar</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if jobs|length == limit %}
+<p class="list-note">Mostrando os {{ limit }} jobs mais recentes.</p>
+{% endif %}
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    {% if status or job_type %}
+    <p class="empty-title">Nenhum job nesse filtro</p>
+    <p>Troque a situação ou limpe o tipo para ver a fila inteira.</p>
+    {% else %}
+    <p class="empty-title">A fila está vazia</p>
+    <p>
+      Os jobs aparecem aqui quando uma busca do Hunter começa ou quando a
+      sincronização de anúncios roda.
+    </p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

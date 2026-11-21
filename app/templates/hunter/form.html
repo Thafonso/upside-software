@@ -1,0 +1,118 @@
+{% extends "base.html" %} {% block title %}Nova busca{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Nova busca</h1>
+    <p class="page-subtitle">
+      Um nicho por linha. A consulta enviada ao Google fica no formato
+      “nicho em bairro, cidade”.
+    </p>
+  </div>
+  <div class="page-actions">
+    <span class="quota">{{ used_today }} de {{ daily_limit }} buscas hoje</span>
+    <a class="btn btn--quiet" href="/hunter">Voltar</a>
+  </div>
+</header>
+
+{% if alert %}
+<p class="alert alert--error" role="alert">{{ alert }}</p>
+{% endif %} {% if errors %}
+<p class="alert alert--error" role="alert">Confira os campos marcados abaixo.</p>
+{% endif %}
+
+<form class="form-card" method="post" action="/hunter/searches">
+  <section class="form-section">
+    <h2 class="form-section-title">O que procurar</h2>
+    <div class="form-grid">
+      <div class="field span-all">
+        <label for="niches">Nichos</label>
+        <textarea
+          class="textarea"
+          id="niches"
+          name="niches"
+          rows="4"
+          placeholder="dentista&#10;clínica odontológica"
+          required
+          autofocus
+          {% if errors.niches %}aria-invalid="true" aria-describedby="err-niches"{% endif %}
+        >{{ values.niches|default('', true) }}</textarea>
+        <p class="field-hint">
+          Um por linha, até cinco. Cada nicho vira uma consulta na mesma busca.
+        </p>
+        {% if errors.niches %}
+        <p class="field-error" id="err-niches">{{ errors.niches }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="city">Cidade</label>
+        <input
+          class="input"
+          id="city"
+          name="city"
+          type="text"
+          value="{{ values.city|default('', true) }}"
+          placeholder="Curitiba"
+          required
+          {% if errors.city %}aria-invalid="true" aria-describedby="err-city"{% endif %}
+        />
+        {% if errors.city %}
+        <p class="field-error" id="err-city">{{ errors.city }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="neighborhood">Bairro</label>
+        <input
+          class="input"
+          id="neighborhood"
+          name="neighborhood"
+          type="text"
+          value="{{ values.neighborhood|default('', true) }}"
+          placeholder="Batel"
+        />
+        <p class="field-hint">Opcional. Sem bairro, a busca cobre a cidade toda.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2 class="form-section-title">Quanto buscar</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="quantity">Quantidade</label>
+        <select class="select" id="quantity" name="quantity">
+          {% for amount in quantities %}
+          <option value="{{ amount }}" {% if values.quantity == amount|string %}selected{% endif %}>
+            até {{ amount }} empresas
+          </option>
+          {% endfor %}
+        </select>
+        <p class="field-hint">Quanto maior, mais tempo o Google leva.</p>
+        {% if errors.quantity %}
+        <p class="field-error">{{ errors.quantity }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label class="check" for="fetch_emails">
+          <input
+            type="checkbox"
+            id="fetch_emails"
+            name="fetch_emails"
+            value="1"
+            {% if values.fetch_emails %}checked{% endif %}
+          />
+          <span>Procurar e-mails nos sites</span>
+        </label>
+        <p class="field-hint">Visita o site de cada empresa, então leva o dobro do tempo.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn--primary" type="submit">Começar a busca</button>
+    <a class="btn btn--quiet" href="/hunter">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

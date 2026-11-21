@@ -536,6 +536,27 @@ table.data .shrink {
   width: 1%;
   white-space: nowrap;
 }
+table.data .nowrap {
+  white-space: nowrap;
+}
+/* Campo secundario longo nao pode esticar a linha inteira. */
+table.data .clip {
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nome que e tambem link: continua sendo o nome, nao um link azul. */
+a.entity-name {
+  color: var(--ink);
+  text-decoration: none;
+}
+a.entity-name:hover {
+  color: var(--terracota-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 
 /* O nome é a única coisa na tabela que ganha a serifa. */
 .entity {
@@ -613,6 +634,174 @@ table.data .shrink {
 }
 .badge--archived {
   color: var(--pedra);
+}
+
+/* Situacao de job */
+.badge--queued {
+  color: var(--text-muted);
+}
+.badge--running {
+  color: var(--terracota-dark);
+  background: var(--terracota-soft);
+  border-color: rgba(184, 95, 64, 0.22);
+}
+.badge--done {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: rgba(63, 125, 82, 0.25);
+}
+.badge--failed {
+  color: var(--error);
+  background: var(--error-soft);
+  border-color: rgba(178, 59, 46, 0.25);
+}
+
+/* Situacao de busca do Hunter */
+.badge--search-queued {
+  color: var(--text-muted);
+}
+.badge--search-running {
+  color: var(--terracota-dark);
+  background: var(--terracota-soft);
+  border-color: rgba(184, 95, 64, 0.22);
+}
+.badge--search-done {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: rgba(63, 125, 82, 0.25);
+}
+.badge--search-failed {
+  color: var(--error);
+  background: var(--error-soft);
+  border-color: rgba(178, 59, 46, 0.25);
+}
+
+/* ── Estado de uma busca em andamento ────────────────────── */
+
+.state {
+  padding: var(--space-6) var(--space-5);
+  background: var(--paper-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+.state-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: var(--space-2);
+}
+.state p {
+  color: var(--text-muted);
+  max-width: 60ch;
+}
+.state .btn {
+  margin-top: var(--space-5);
+}
+.state--failed {
+  border-left: 3px solid var(--error);
+}
+.state--waiting {
+  border-left: 3px solid var(--terracota);
+}
+
+/* O unico movimento da interface: diz que algo esta acontecendo
+   agora, num lugar onde nao ha porcentagem honesta a mostrar. */
+.pulse {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--terracota);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+
+.quota {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--control-height);
+  font-size: var(--fs-base);
+  font-weight: 400;
+  cursor: pointer;
+}
+.check input {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--terracota);
+  cursor: pointer;
+}
+
+/* ── Resumo da fila por situacao ─────────────────────────── */
+
+.tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--paper-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+.tally-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+/* Contador e dado operacional, nao tipografia de exibicao: em corpo
+   pequeno o algarismo da Cormorant fica fino demais para ser lido de
+   relance, entao aqui manda a fonte da interface. */
+.tally-item strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Identificador de job: fonte da interface, so um pouco mais firme. */
+.job-type {
+  display: block;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--ink);
+}
+
+.error-text {
+  display: block;
+  max-width: 22ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--error);
+  font-size: var(--fs-small);
+}
+
+.list-note {
+  margin-top: var(--space-3);
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
 }
 
 /* ── Estado vazio: um convite, não um aviso ─────────────── */

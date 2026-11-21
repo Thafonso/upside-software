@@ -1,8 +1,7 @@
-"""Background process.
+"""Background process: drains the job queue and arms the clock triggers.
 
-Step 1 scope: keep a supervised process alive next to the web app and prove the
-database is reachable, so Compose reports a real state instead of a crash loop.
-Step 2 adds the job-queue loop and the APScheduler triggers to this same loop.
+One job at a time, in order of ``run_after``. Slow work (the scraper, the
+Meta API, checking sites) belongs here, never in a web request.
 """
 
 from __future__ import annotations
@@ -16,11 +15,16 @@ from sqlalchemy import text
 
 from app.shared.config import get_settings
 from app.shared.db import dispose_engine, get_sessionmaker
+from app.shared.jobs import load_handler_modules, registered_types, run_forever
+from app.shared.jobs import queue as job_queue
+from app.shared.jobs.scheduler import build_scheduler
 
 logger = logging.getLogger("app.worker")
 
 DB_RETRY_SECONDS = 3.0
-HEARTBEAT_SECONDS = 30.0
+
+# Packages whose import registers queue handlers. Step 5 adds "app.ads".
+HANDLER_MODULES: tuple[str, ...] = ("app.hunter",)
 
 
 async def wait_for_database(*, attempts: int = 20) -> None:
@@ -40,16 +44,31 @@ async def wait_for_database(*, attempts: int = 20) -> None:
     raise RuntimeError(msg) from last_error
 
 
+async def rescue_orphans() -> None:
+    """Requeue whatever a previous worker left mid-flight."""
+    async with get_sessionmaker()() as session:
+        rescued = await job_queue.requeue_orphans(session)
+        await session.commit()
+    if rescued:
+        logger.warning("requeued %s job(s) left running by a previous worker", rescued)
+
+
 async def run(stop: asyncio.Event) -> None:
     settings = get_settings()
     logger.info("worker starting (env=%s, tz=%s)", settings.app_env, settings.tz)
-    await wait_for_database()
 
-    while not stop.is_set():
-        with contextlib.suppress(TimeoutError):
-            await asyncio.wait_for(stop.wait(), timeout=HEARTBEAT_SECONDS)
-        if not stop.is_set():
-            logger.debug("worker idle")
+    await wait_for_database()
+    load_handler_modules(HANDLER_MODULES)
+    logger.info("handlers: %s", ", ".join(registered_types()) or "nenhum ainda")
+    await rescue_orphans()
+
+    sessions = get_sessionmaker()
+    scheduler = build_scheduler(sessions)
+    scheduler.start()
+    try:
+        await run_forever(sessions, stop)
+    finally:
+        scheduler.shutdown(wait=False)
 
     logger.info("worker stopping")
 
