@@ -1,0 +1,423 @@
+{#
+  O PDF do relatório mensal. Renderizado pelo WeasyPrint, não pelo navegador.
+
+  O CSS está aqui dentro, e não em /static, de propósito: um documento tem de
+  carregar a própria aparência. Pelo mesmo motivo as fontes são as do sistema
+  (DejaVu, instaladas na imagem) — buscar fonte na web na hora de gerar o PDF
+  transformaria uma falha de rede em relatório quebrado.
+#}
+{% import "reports/_metrics.html" as fmt %}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>{{ snapshot.client_name }} — {{ snapshot.period.label }}</title>
+    <style>
+      :root {
+        --ink: #16120d;
+        --paper: #ede8e0;
+        --paper-3: #f4f1eb;
+        --terracota: #b85f40;
+        --areia: #d9c2a4;
+        --pedra: #8c8174;
+        --text: #2a241d;
+        --text-muted: #5b5247;
+        --line: #d8d0c4;
+        --success: #3f7d52;
+        --error: #b23b2e;
+      }
+
+      @page {
+        size: A4;
+        margin: 18mm 16mm 20mm;
+        @bottom-left {
+          content: "{{ snapshot.client_name }} · {{ snapshot.period.label }}";
+          font-family: "DejaVu Sans", sans-serif;
+          font-size: 7.5pt;
+          color: #8c8174;
+        }
+        @bottom-right {
+          content: "{{ brand_name }} · " counter(page) "/" counter(pages);
+          font-family: "DejaVu Sans", sans-serif;
+          font-size: 7.5pt;
+          color: #8c8174;
+        }
+      }
+
+      /* A capa não leva rodapé: ela é a folha de apresentação. O fundo é
+         pintado na própria página, e não só no bloco, para não sobrar
+         uma faixa branca na borda. */
+      @page cover {
+        margin: 0;
+        background: #ede8e0;
+        @bottom-left { content: none; }
+        @bottom-right { content: none; }
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 9.5pt;
+        line-height: 1.45;
+        color: var(--text);
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: "DejaVu Serif", Georgia, serif;
+        font-weight: normal;
+        color: var(--ink);
+        margin: 0;
+      }
+
+      /* ── Capa ───────────────────────────────────────────── */
+
+      /* Posicionamento absoluto, não flex: o WeasyPrint não resolve
+         `margin-top: auto` dentro de um flex em coluna, e a capa acaba
+         com tudo amontoado no topo. */
+      .cover {
+        page: cover;
+        page-break-after: always;
+        position: relative;
+        height: 297mm;
+        background: var(--paper);
+      }
+      .cover-brands {
+        position: absolute;
+        top: 30mm;
+        left: 22mm;
+        right: 22mm;
+      }
+      .mark {
+        display: inline-block;
+        vertical-align: middle;
+        width: 16mm;
+        height: 16mm;
+        border-radius: 3mm;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: "DejaVu Serif", Georgia, serif;
+        font-size: 18pt;
+        line-height: 16mm;
+        text-align: center;
+      }
+      .mark--client {
+        background: var(--terracota);
+        font-size: 13pt;
+      }
+      .brand-word {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 7mm;
+        font-family: "DejaVu Serif", Georgia, serif;
+        font-size: 12pt;
+        letter-spacing: 0.22em;
+        color: var(--ink);
+        text-transform: uppercase;
+      }
+      .brand-sub {
+        display: block;
+        font-family: "DejaVu Sans", sans-serif;
+        font-size: 7.5pt;
+        letter-spacing: 0.18em;
+        color: var(--pedra);
+      }
+      .cover-body {
+        position: absolute;
+        left: 22mm;
+        right: 22mm;
+        bottom: 32mm;
+      }
+      .cover-kind {
+        font-size: 8pt;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--terracota);
+        margin: 0 0 4mm;
+      }
+      .cover-title {
+        margin: 0;
+      }
+      .cover-client {
+        display: inline-block;
+        vertical-align: middle;
+        margin-left: 7mm;
+        font-size: 30pt;
+        line-height: 1.1;
+      }
+      .cover-period {
+        font-family: "DejaVu Serif", Georgia, serif;
+        font-size: 15pt;
+        color: var(--text-muted);
+        margin: 3mm 0 0;
+      }
+      .cover-foot {
+        margin-top: 14mm;
+        padding-top: 4mm;
+        border-top: 0.4mm solid var(--areia);
+        font-size: 8.5pt;
+        color: var(--text-muted);
+      }
+
+      /* ── Seções ─────────────────────────────────────────── */
+
+      .section {
+        margin-bottom: 9mm;
+      }
+      .section-title {
+        font-size: 13pt;
+        padding-bottom: 2mm;
+        margin-bottom: 4mm;
+        border-bottom: 0.4mm solid var(--line);
+      }
+      .lead {
+        margin: 0 0 5mm;
+        color: var(--text-muted);
+      }
+      .note {
+        margin: 0 0 6mm;
+        padding: 3mm 4mm;
+        background: var(--paper-3);
+        border-left: 1mm solid var(--areia);
+        font-size: 8.5pt;
+        color: var(--text-muted);
+      }
+
+      /* ── Resumo ─────────────────────────────────────────── */
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 2.4mm 2mm;
+        text-align: left;
+        border-bottom: 0.3mm solid var(--line);
+      }
+      th {
+        font-size: 7.5pt;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--pedra);
+        font-weight: normal;
+      }
+      .num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+      }
+      .summary td:first-child {
+        color: var(--ink);
+      }
+      .summary .value {
+        font-family: "DejaVu Serif", Georgia, serif;
+        font-size: 12pt;
+        color: var(--ink);
+      }
+      .delta {
+        font-size: 8.5pt;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+      .delta--good {
+        color: var(--success);
+      }
+      .delta--bad {
+        color: var(--error);
+      }
+      .delta-arrow {
+        font-size: 7pt;
+      }
+
+      /* ── Gráfico ────────────────────────────────────────── */
+
+      .chart {
+        width: 100%;
+        border: 0.3mm solid var(--line);
+        border-radius: 1mm;
+      }
+      .chart-caption {
+        margin: 2mm 0 0;
+        font-size: 8pt;
+        color: var(--pedra);
+      }
+
+      /* ── Campanhas e comentário ─────────────────────────── */
+
+      .campaigns {
+        page-break-inside: auto;
+      }
+      .campaigns tr {
+        page-break-inside: avoid;
+      }
+      .campaign-name {
+        color: var(--ink);
+      }
+      .campaign-status {
+        display: block;
+        font-size: 7.5pt;
+        color: var(--pedra);
+      }
+      .comment {
+        white-space: pre-line;
+        padding: 4mm 5mm;
+        background: var(--paper-3);
+        border-radius: 1mm;
+      }
+      .signature {
+        margin: 4mm 0 0;
+        font-size: 8.5pt;
+        color: var(--text-muted);
+      }
+      .empty {
+        padding: 6mm;
+        background: var(--paper-3);
+        border-radius: 1mm;
+        color: var(--text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ── Capa ─────────────────────────────────────────── -->
+    <section class="cover">
+      <div class="cover-brands">
+        <span class="mark" aria-hidden="true">U</span>
+        <span class="brand-word">
+          {{ brand_name }}
+          <span class="brand-sub">Marketing · Software · IA</span>
+        </span>
+      </div>
+
+      <div class="cover-body">
+        <p class="cover-kind">Relatório mensal de anúncios</p>
+        <div class="cover-title">
+          <span class="mark mark--client" aria-hidden="true">{{ snapshot.client_initials }}</span>
+          <h1 class="cover-client">{{ snapshot.client_name }}</h1>
+        </div>
+        <p class="cover-period">{{ snapshot.period.label }}</p>
+
+        <div class="cover-foot">
+          Período de {{ snapshot.period.since|date_br }} a
+          {{ snapshot.period.until|date_br }}. Resultado contado:
+          {{ snapshot.result_label|lower }}.
+          {% if snapshot.generated_at %}
+          <br />Gerado em {{ snapshot.generated_at|datetime_br }}{% if
+          snapshot.generated_by %} por {{ snapshot.generated_by }}{% endif %}.
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Resumo ───────────────────────────────────────── -->
+    <section class="section">
+      <h2 class="section-title">Resumo de {{ snapshot.period.label }}</h2>
+
+      {% if snapshot.partial %}
+      <p class="note">
+        O mês ainda estava em andamento quando este relatório foi gerado, então
+        os números cobrem só os dias já apurados.
+      </p>
+      {% endif %}
+
+      {% if snapshot.has_data %}
+      <p class="lead">
+        {{ snapshot.days_with_spend }} dia{{ '' if snapshot.days_with_spend == 1
+        else 's' }} com investimento no mês.
+        {% if snapshot.has_comparison %} A comparação é com
+        {{ snapshot.previous_period.label }}.
+        {% else %} Não há dados de {{ snapshot.previous_period.label }} para
+        comparar. {% endif %}
+      </p>
+
+      <table class="summary">
+        <thead>
+          <tr>
+            <th scope="col">Indicador</th>
+            <th scope="col" class="num">{{ snapshot.period.short_label }}</th>
+            <th scope="col" class="num">{{ snapshot.previous_period.short_label }}</th>
+            <th scope="col" class="num">Variação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for metric in snapshot.metrics %}
+          <tr>
+            <td>{{ metric.label }}</td>
+            <td class="num value">{{ fmt.amount(metric) }}</td>
+            <td class="num">{{ fmt.previous_amount(metric) }}</td>
+            <td class="num">{{ fmt.delta(metric) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">
+        Não há métricas de anúncios para {{ snapshot.period.label }}.
+        {% if not snapshot.account_ids %} Nenhuma conta de anúncios estava
+        vinculada a este cliente quando o relatório foi gerado. {% endif %}
+      </p>
+      {% endif %}
+    </section>
+
+    {% if snapshot.has_data %}
+    <!-- ── Gráfico diário ───────────────────────────────── -->
+    <section class="section">
+      <h2 class="section-title">Dia a dia</h2>
+      <img class="chart" src="{{ chart_uri }}" alt="Investimento e resultados por dia" />
+      <p class="chart-caption">
+        Investimento em cima, resultados embaixo, no mesmo eixo de dias. São dois
+        gráficos e não um: reais e contagens têm escalas diferentes, e sobrepor
+        as duas sugeriria uma relação que o dado não mostra.
+      </p>
+    </section>
+
+    <!-- ── Campanhas ────────────────────────────────────── -->
+    <section class="section">
+      <h2 class="section-title">Por campanha</h2>
+      <table class="campaigns">
+        <thead>
+          <tr>
+            <th scope="col">Campanha</th>
+            <th scope="col" class="num">Investimento</th>
+            <th scope="col" class="num">Resultados</th>
+            <th scope="col" class="num">Custo/result.</th>
+            <th scope="col" class="num">Cliques</th>
+            <th scope="col" class="num">Impressões</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for campaign in snapshot.campaigns %}
+          <tr>
+            <td>
+              <span class="campaign-name">{{ campaign.name }}</span>
+              <span class="campaign-status">{{ campaign.status_label }}</span>
+            </td>
+            <td class="num">{{ campaign.spend|brl }}</td>
+            <td class="num">{{ campaign.results|num }}</td>
+            <td class="num">
+              {% if campaign.cost_per_result %}{{ campaign.cost_per_result|brl }}
+              {% else %}—{% endif %}
+            </td>
+            <td class="num">{{ campaign.link_clicks|num }}</td>
+            <td class="num">{{ campaign.impressions|num }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endif %}
+
+    {% if snapshot.comment %}
+    <!-- ── Comentário do gestor ─────────────────────────── -->
+    <section class="section">
+      <h2 class="section-title">Comentário do gestor</h2>
+      <div class="comment">{{ snapshot.comment }}</div>
+      {% if snapshot.generated_by %}
+      <p class="signature">— {{ snapshot.generated_by }}, {{ brand_name }}</p>
+      {% endif %}
+    </section>
+    {% endif %}
+  </body>
+</html>

@@ -1161,6 +1161,53 @@ a.entity-name:hover {
 }
 
 /* ════════════════════════════════════════════════════════════
+   RELATORIOS
+   ════════════════════════════════════════════════════════════ */
+
+/* A variacao sobre o mes anterior. A cor diz se a noticia e boa, nao
+   se o numero subiu: custo por resultado caindo e uma boa noticia. */
+.delta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2em;
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.delta--good {
+  color: var(--success);
+}
+.delta--bad {
+  color: var(--error);
+}
+.delta-arrow {
+  font-size: var(--fs-micro);
+}
+.delta-base {
+  display: block;
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}
+
+/* O comentario do gestor chega com paragrafos; eles ficam. */
+.prose {
+  max-width: 62ch;
+  white-space: pre-line;
+  color: var(--text);
+}
+
+.report-note {
+  margin: 0 0 var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper-3);
+  border-left: 3px solid var(--areia);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════════════════════════
    TELAS ESTREITAS
    ════════════════════════════════════════════════════════════ */
 

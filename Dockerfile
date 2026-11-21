@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libpango-1.0-0 \
         libpangoft2-1.0-0 \
         libharfbuzz0b \
+        libharfbuzz-subset0 \
         libffi8 \
         libatomic1 \
         fonts-dejavu-core \

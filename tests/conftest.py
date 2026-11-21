@@ -131,7 +131,7 @@ async def clean_tables(session: AsyncSession) -> AsyncIterator[AsyncSession]:
     await session.execute(
         text(
             "TRUNCATE app_user, client, job, hunter_search, hunter_prospect,"
-            " ads_account, ads_campaign, ads_campaign_daily, sync_log"
+            " ads_account, ads_campaign, ads_campaign_daily, sync_log, report"
         )
     )
     await session.commit()

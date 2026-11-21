@@ -1,0 +1,130 @@
+{% extends "base.html" %} {% block title %}Relatórios de {{ client.name }}{%
+endblock %} {% block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Relatórios de {{ client.name }}</h1>
+    <p class="page-subtitle">
+      Resultado contado: {{ client.result_label|lower }}. Cada relatório guarda
+      os números do mês como estavam no dia em que foi gerado.
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--quiet" href="/reports">Todos os clientes</a>
+    <a class="btn btn--quiet" href="/ads/clients/{{ client.id }}">Ver anúncios</a>
+  </div>
+</header>
+
+{% if alert %}
+<p class="alert alert--error">{{ alert }}</p>
+{% endif %}
+
+<section class="form-card">
+  <h2 class="form-section-title">Gerar relatório</h2>
+  <form method="post" action="/reports/clients/{{ client.id }}">
+    <div class="form-grid">
+      <div class="field">
+        <label for="period">Mês de referência</label>
+        <select class="select" id="period" name="period">
+          {% for month in months %}
+          <option value="{{ month.short_key }}" {% if values.period == month.short_key %}selected{% endif %}>
+            {{ month.label }}
+          </option>
+          {% endfor %}
+        </select>
+        {% if errors.period %}
+        <p class="field-error">{{ errors.period }}</p>
+        {% else %}
+        <p class="field-hint">
+          O mês fechado é o normal. Um mês em andamento gera um relatório
+          parcial, e o PDF avisa isso.
+        </p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="comment">Comentário do gestor</label>
+        <textarea class="textarea" id="comment" name="comment" rows="5"
+          placeholder="O que explica os números deste mês e o que vem no próximo.">{{ values.comment or '' }}</textarea>
+        <p class="field-hint">
+          Entra no fim do PDF, do jeito que for escrito aqui. Opcional.
+        </p>
+      </div>
+    </div>
+
+    {% if already_in_month %}
+    <p class="report-note">
+      Este cliente já tem {{ already_in_month }} relatório{{ '' if
+      already_in_month == 1 else 's' }} deste mês. Gerar outro cria um documento
+      novo: o anterior continua aberto no histórico, com os números que tinha.
+    </p>
+    {% endif %}
+
+    <div class="form-actions">
+      <button class="btn btn--primary" type="submit">Gerar relatório</button>
+    </div>
+  </form>
+</section>
+
+<section class="form-section">
+  <h2 class="form-section-title">Histórico</h2>
+  {% if reports %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Mês</th>
+          <th scope="col" class="num">Investimento</th>
+          <th scope="col" class="num">Resultados</th>
+          <th scope="col" class="num">Custo por resultado</th>
+          <th scope="col">Gerado</th>
+          <th scope="col" class="shrink"><span class="sr-only">Ações</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for report in reports %}
+        <tr>
+          <td>
+            <a class="entity-name" href="/reports/{{ report.id }}">
+              {{ report.period.label }}
+            </a>
+            {% if report.snapshot.partial %}
+            <span class="entity-meta">parcial</span>
+            {% endif %}
+          </td>
+          <td class="num">{{ report.snapshot.totals.spend|brl }}</td>
+          <td class="num">{{ report.snapshot.totals.results|num }}</td>
+          <td class="num">
+            {% if report.snapshot.totals.cost_per_result %}
+            {{ report.snapshot.totals.cost_per_result|brl }}
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td>
+            {{ report.created_at|datetime_br }}
+            {% if report.generated_by %}
+            <span class="entity-meta">por {{ report.generated_by }}</span>
+            {% endif %}
+          </td>
+          <td class="shrink">
+            <div class="row-actions">
+              <a class="btn btn--quiet btn--sm" href="/reports/{{ report.id }}">Abrir</a>
+              <a class="btn btn--quiet btn--sm" href="/reports/{{ report.id }}/pdf">PDF</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="empty">
+      <p class="empty-title">Nenhum relatório ainda</p>
+      <p>
+        Escolha o mês acima e gere o primeiro. Se o cliente ainda não tiver conta
+        de anúncios vinculada, o relatório sai sem números.
+      </p>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

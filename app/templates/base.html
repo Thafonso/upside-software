@@ -39,6 +39,7 @@
 
         {% set nav_items = [{"key": "hunter", "label": "Hunter", "href":
         "/hunter"}, {"key": "ads", "label": "Anúncios", "href": "/ads"}, {"key":
+        "reports", "label": "Relatórios", "href": "/reports"}, {"key":
         "clients", "label": "Clientes", "href": "/clients"}] %}
         {% if user and user.is_admin %} {% set nav_items = nav_items + [{"key":
         "jobs", "label": "Jobs", "href": "/admin/jobs"}] %} {% endif %}
