@@ -495,7 +495,7 @@ async def http(clean_tables: AsyncSession) -> AsyncIterator[httpx.AsyncClient]:
 
 
 async def test_the_screen_starts_empty(http: httpx.AsyncClient) -> None:
-    response = await http.get("/ads")
+    response = await http.get("/ads/accounts")
     assert response.status_code == 200
     assert "Nenhuma conta vinculada" in response.text
 
@@ -518,7 +518,7 @@ async def test_linking_from_the_screen_queues_the_first_sync(
     assert [account.id for account in accounts] == [ACCOUNT]
     assert {job.type for job in jobs} == {ads_jobs.SYNC_STRUCTURE, ads_jobs.RESYNC_7D}
 
-    screen = await http.get("/ads")
+    screen = await http.get("/ads/accounts")
     assert ACCOUNT in screen.text
     assert "Padaria Central" in screen.text
 
@@ -577,7 +577,7 @@ async def test_the_team_can_look_but_not_link(
     await clean_tables.commit()
     await http.post("/login", data={"email": "equipe@upsidemkt.com.br", "password": "senha-equipe"})
 
-    screen = await http.get("/ads")
+    screen = await http.get("/ads/accounts")
     assert screen.status_code == 200
     assert "Vincular uma conta" not in screen.text
 

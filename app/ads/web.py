@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime
 from typing import Annotated, Any
+from uuid import UUID
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse, Response
@@ -10,13 +12,17 @@ from fastapi.responses import RedirectResponse, Response
 from app.ads.domain import (
     AccountStatus,
     AccountValidationError,
+    Period,
+    PeriodPreset,
     build_account_input,
+    resolve_period,
 )
 from app.ads.jobs import RESYNC_7D, SYNC_ACCOUNT, SYNC_STRUCTURE
 from app.ads.repository import SqlAlchemyAdsRepository
 from app.ads.service import AdsService, UnknownClient
 from app.clients import ClientsApi
 from app.shared.auth import AdminUser, CurrentUser, DbSession
+from app.shared.clock import today_local
 from app.shared.jobs import enqueue
 from app.shared.templating import page
 
@@ -43,7 +49,7 @@ async def _screen_context(session: DbSession) -> dict[str, Any]:
     }
 
 
-@router.get("")
+@router.get("/accounts")
 async def list_accounts(request: Request, user: CurrentUser, session: DbSession) -> Response:
     return page(
         request,
@@ -105,7 +111,7 @@ async def link_account(
     # First sync right away, so the screen is not empty until the next hour.
     await enqueue(session, SYNC_STRUCTURE, {"account_id": account.id})
     await enqueue(session, RESYNC_7D, {"account_id": account.id})
-    return RedirectResponse("/ads?linked=1", status_code=303)
+    return RedirectResponse("/ads/accounts?linked=1", status_code=303)
 
 
 @router.post("/accounts/{account_id}/sync")
@@ -113,10 +119,101 @@ async def sync_now(user: AdminUser, session: DbSession, account_id: str) -> Redi
     """Ask for this account's numbers now instead of waiting for the hour."""
     if await _service(session).get_account(account_id) is not None:
         await enqueue(session, SYNC_ACCOUNT, {"account_id": account_id})
-    return RedirectResponse("/ads?queued=1", status_code=303)
+    return RedirectResponse("/ads/accounts?queued=1", status_code=303)
 
 
 @router.post("/accounts/{account_id}/unlink")
 async def unlink_account(user: AdminUser, session: DbSession, account_id: str) -> RedirectResponse:
     await _service(session).unlink_account(account_id)
-    return RedirectResponse("/ads?unlinked=1", status_code=303)
+    return RedirectResponse("/ads/accounts?unlinked=1", status_code=303)
+
+
+# ── painel ────────────────────────────────────────────────────
+
+DEFAULT_PRESET = PeriodPreset.THIS_MONTH
+ALL_PRESETS = tuple(PeriodPreset)
+
+
+def _parse_day(raw: str) -> date | None:
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").date()  # noqa: DTZ007
+    except (ValueError, TypeError):
+        return None
+
+
+def read_period(preset: str, since: str, until: str) -> Period:
+    """A named range, or the custom one the dates spell out."""
+    start, end = _parse_day(since), _parse_day(until)
+    if start and end and start <= end:
+        return Period(since=start, until=end)
+
+    try:
+        chosen = PeriodPreset(preset)
+    except ValueError:
+        chosen = DEFAULT_PRESET
+    return resolve_period(chosen, today_local())
+
+
+@router.get("")
+async def panel(
+    request: Request,
+    user: CurrentUser,
+    session: DbSession,
+    preset: str = DEFAULT_PRESET.value,
+    since: str = "",
+    until: str = "",
+) -> Response:
+    period = read_period(preset, since, until)
+    return page(
+        request,
+        "ads/panel.html",
+        user,
+        active="ads",
+        period=period,
+        presets=ALL_PRESETS,
+        rows=await _service(session).panel_rows(period),
+    )
+
+
+@router.get("/clients/{client_id}")
+async def client_panel(
+    request: Request,
+    user: CurrentUser,
+    session: DbSession,
+    client_id: UUID,
+    preset: str = DEFAULT_PRESET.value,
+    since: str = "",
+    until: str = "",
+) -> Response:
+    client = await ClientsApi(session).get_client(client_id)
+    if client is None:
+        return page(
+            request,
+            "errors/not_found.html",
+            user,
+            active="ads",
+            message="Cliente não encontrado.",
+            status_code=404,
+        )
+
+    period = read_period(preset, since, until)
+    service = _service(session)
+    series = await service.client_series(client_id, period)
+
+    return page(
+        request,
+        "ads/client.html",
+        user,
+        active="ads",
+        client=client,
+        period=period,
+        presets=ALL_PRESETS,
+        accounts=await service.list_accounts(client_id=client_id),
+        totals=await service.client_totals(client_id, period),
+        campaigns=await service.client_campaigns(client_id, period),
+        chart={
+            "days": [point.day.strftime("%d/%m") for point in series],
+            "spend": [float(point.spend) for point in series],
+            "results": [point.results for point in series],
+        },
+    )

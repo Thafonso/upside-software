@@ -684,6 +684,74 @@ a.entity-name:hover {
   border-color: rgba(178, 59, 46, 0.25);
 }
 
+/* ── Painel de anuncios: KPIs e graficos ─────────────────── */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--paper-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+.kpi-label {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+/* O unico lugar onde a serifa carrega um numero: aqui ele e grande
+   o bastante para os algarismos da Cormorant ficarem legiveis. */
+.kpi-value {
+  font-family: var(--font-heading);
+  font-size: var(--fs-figure);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum" 1, "tnum" 1;
+}
+.kpi-note {
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.charts {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+.chart-card {
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--paper-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+.chart-title {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: var(--space-3);
+}
+.chart-box {
+  position: relative;
+  height: 180px;
+}
+
+.period-bar .field {
+  min-width: 150px;
+}
+.period-bar .toolbar-count {
+  align-self: center;
+}
+
 /* ── Lista de empresas: nota, acoes e filtros ────────────── */
 
 .list-bar {
