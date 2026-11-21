@@ -11,19 +11,28 @@ include_external_packages = True
 # the same intent, stated precisely: app.hunter may import app.clients (the
 # package, which is the public API) and nothing inside it.
 
-[importlinter:contract:clients-never-depends-on-hunter]
-name = The clients module never imports the hunter
+[importlinter:contract:clients-depends-on-no-one]
+name = The clients module never imports another feature module
 type = forbidden
 source_modules =
     app.clients
 forbidden_modules =
     app.hunter
+    app.ads
 
-[importlinter:contract:hunter-only-through-the-clients-api]
-name = The hunter reaches the clients module only through its public API
+[importlinter:contract:hunter-and-ads-are-independent]
+name = The hunter and the ads module never import each other
+type = independence
+modules =
+    app.hunter
+    app.ads
+
+[importlinter:contract:only-through-the-clients-api]
+name = Other modules reach the clients module only through its public API
 type = forbidden
 source_modules =
     app.hunter
+    app.ads
 forbidden_modules =
     app.clients.api
     app.clients.domain
@@ -41,6 +50,7 @@ source_modules =
 forbidden_modules =
     app.clients
     app.hunter
+    app.ads
 
 [importlinter:contract:feature-modules-ignore-entrypoints]
 name = Feature modules never import the process entrypoints
@@ -48,6 +58,7 @@ type = forbidden
 source_modules =
     app.clients
     app.hunter
+    app.ads
 forbidden_modules =
     app.main
     app.worker

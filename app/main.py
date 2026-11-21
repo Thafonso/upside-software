@@ -11,6 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from app.ads import router as ads_router
 from app.clients import router as clients_router
 from app.hunter import router as hunter_router
 from app.shared.auth import NotAuthenticated, NotAuthorized
@@ -47,6 +48,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(shared_router)
 app.include_router(clients_router)
 app.include_router(hunter_router)
+app.include_router(ads_router)
 app.include_router(jobs_router)
 
 

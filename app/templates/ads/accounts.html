@@ -1,0 +1,220 @@
+{% extends "base.html" %} {% block title %}Anúncios{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Contas de anúncios</h1>
+    <p class="page-subtitle">
+      Cada conta da Meta aponta para um cliente. A sincronização roda sozinha de
+      hora em hora e refaz os últimos sete dias de madrugada, porque a Meta ainda
+      ajusta esses números depois.
+    </p>
+  </div>
+</header>
+
+{% if request.query_params.get('linked') %}
+<p class="alert alert--ok" role="status">
+  Conta vinculada. A primeira sincronização já foi para a fila.
+</p>
+{% elif request.query_params.get('queued') %}
+<p class="alert alert--ok" role="status">Sincronização enfileirada.</p>
+{% elif request.query_params.get('unlinked') %}
+<p class="alert alert--ok" role="status">
+  Conta desvinculada e métricas removidas.
+</p>
+{% endif %}
+
+{% if accounts %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Conta</th>
+        <th scope="col" class="col-md">Cliente</th>
+        <th scope="col">Resultado contado</th>
+        <th scope="col" class="shrink">Situação</th>
+        <th scope="col">Última sincronização</th>
+        {% if user.is_admin %}
+        <th scope="col" class="shrink"><span class="sr-only">Ações</span></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for account, client in accounts %}
+      <tr>
+        <td>
+          <span class="entity-name">{{ account.name or account.id }}</span>
+          <span class="entity-meta">{{ account.id }}</span>
+        </td>
+        <td>
+          {% if client %}{{ client.name }}{% else %}
+          <span class="muted">cliente removido</span>{% endif %}
+        </td>
+        <td>
+          {% if client %}{{ client.result_label }}{% else %}
+          <span class="muted">—</span>{% endif %}
+        </td>
+        <td class="shrink">
+          <span class="badge badge--account-{{ account.status.value }}">
+            {{ account.status_label }}
+          </span>
+        </td>
+        <td class="nowrap">
+          {% if account.last_synced_at %}{{ account.last_synced_at|datetime_br }}
+          {% else %}<span class="muted">ainda não</span>{% endif %}
+        </td>
+        {% if user.is_admin %}
+        <td class="shrink">
+          <div class="row-actions">
+            <form method="post" action="/ads/accounts/{{ account.id }}/sync">
+              <button class="btn btn--quiet btn--sm" type="submit">Sincronizar</button>
+            </form>
+            <form
+              method="post"
+              action="/ads/accounts/{{ account.id }}/unlink"
+              onsubmit="return confirm('Desvincular {{ account.id }} e apagar as métricas sincronizadas?')"
+            >
+              <button class="btn btn--danger btn--sm" type="submit">Desvincular</button>
+            </form>
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    <p class="empty-title">Nenhuma conta vinculada</p>
+    <p>
+      Vincule a conta de anúncios de um cliente abaixo para começar a acompanhar
+      investimento e resultados.
+    </p>
+  </div>
+</div>
+{% endif %}
+
+{% if user.is_admin %}
+<section class="form-section">
+  <h2 class="form-section-title">Vincular uma conta</h2>
+
+  {% if errors %}
+  <p class="alert alert--error" role="alert">Confira os campos marcados abaixo.</p>
+  {% endif %}
+
+  <form class="form-card" method="post" action="/ads/accounts">
+    <div class="form-grid">
+      <div class="field">
+        <label for="account_id">ID da conta</label>
+        <input
+          class="input"
+          id="account_id"
+          name="account_id"
+          type="text"
+          value="{{ values.account_id|default('', true) }}"
+          placeholder="act_123456789"
+          required
+          {% if errors.account_id %}aria-invalid="true"{% endif %}
+        />
+        <p class="field-hint">Com ou sem o prefixo act_.</p>
+        {% if errors.account_id %}
+        <p class="field-error">{{ errors.account_id }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="client_id">Cliente</label>
+        <select class="select" id="client_id" name="client_id" required>
+          <option value="">Escolha o cliente</option>
+          {% for client in clients %}
+          <option value="{{ client.id }}" {% if values.client_id == client.id|string %}selected{% endif %}>
+            {{ client.name }}
+          </option>
+          {% endfor %}
+        </select>
+        {% if errors.client_id %}
+        <p class="field-error">{{ errors.client_id }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="name">Apelido da conta</label>
+        <input
+          class="input"
+          id="name"
+          name="name"
+          type="text"
+          value="{{ values.name|default('', true) }}"
+          maxlength="160"
+        />
+        <p class="field-hint">Em branco, usa o nome do cliente.</p>
+      </div>
+
+      <div class="field">
+        <label for="status">Situação</label>
+        <select class="select" id="status" name="status">
+          {% for item in statuses %}
+          <option value="{{ item.value }}" {% if values.status == item.value %}selected{% endif %}>
+            {{ item.label }}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="field-hint">Só contas sincronizando entram na rotina de hora em hora.</p>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn--primary" type="submit">Vincular conta</button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<section class="form-section">
+  <h2 class="form-section-title">Últimas sincronizações</h2>
+  {% if syncs %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Conta</th>
+          <th scope="col">O que rodou</th>
+          <th scope="col" class="shrink">Situação</th>
+          <th scope="col" class="num">Linhas</th>
+          <th scope="col">Quando</th>
+          <th scope="col">Erro</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in syncs %}
+        <tr>
+          <td class="nowrap">{{ entry.account_id }}</td>
+          <td>{{ entry.kind.label }}</td>
+          <td class="shrink">
+            <span class="badge badge--sync-{{ entry.status.value }}">
+              {{ entry.status.label }}
+            </span>
+          </td>
+          <td class="num">{{ entry.rows_written|num }}</td>
+          <td class="nowrap">{{ entry.started_at|datetime_br }}</td>
+          <td>
+            {% if entry.message %}
+            <span class="error-text" title="{{ entry.message }}">{{ entry.message }}</span>
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="empty">
+      <p class="empty-title">Nada sincronizado ainda</p>
+      <p>O registro de cada sincronização, com erros e linhas gravadas, aparece aqui.</p>
+    </div>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}
