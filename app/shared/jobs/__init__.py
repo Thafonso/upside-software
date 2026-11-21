@@ -33,6 +33,8 @@ from app.shared.jobs.registry import (
     job_handler,
     load_handler_modules,
     registered_types,
+    restore_handlers,
+    snapshot_handlers,
 )
 from app.shared.jobs.runner import run_forever, run_next
 from app.shared.jobs.web import router
@@ -54,7 +56,9 @@ __all__ = [
     "load_handler_modules",
     "next_run_after",
     "registered_types",
+    "restore_handlers",
     "router",
     "run_forever",
     "run_next",
+    "snapshot_handlers",
 ]

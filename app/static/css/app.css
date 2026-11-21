@@ -407,7 +407,7 @@ a:hover {
 }
 
 .select--sm {
-  min-width: 8.5rem;
+  min-width: 7.6rem;
   min-height: var(--control-height-sm);
   padding: 0.2rem 1.8rem 0.2rem 0.5rem;
   font-size: var(--fs-small);
@@ -468,6 +468,9 @@ a:hover {
   flex: 1;
   min-width: 240px;
   max-width: 420px;
+}
+#prospect-filters .field {
+  min-width: 150px;
 }
 .toolbar-count {
   margin-left: auto;
@@ -674,6 +677,115 @@ a.entity-name:hover {
   color: var(--error);
   background: var(--error-soft);
   border-color: rgba(178, 59, 46, 0.25);
+}
+
+/* ── Lista de empresas: nota, acoes e filtros ────────────── */
+
+.list-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-3);
+}
+.list-bar .toolbar-count {
+  margin-left: 0;
+}
+.list-bar-actions {
+  margin-left: auto;
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* A nota: numero legivel e uma barra que mostra a distancia ate 100. */
+.score {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  cursor: help;
+}
+.score-value {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.score-bar {
+  display: block;
+  width: 44px;
+  height: 3px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.score-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--terracota);
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Grupo de caixas de selecao na barra de filtros. */
+.checks {
+  border: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+.checks legend {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--text);
+  padding: 0;
+  margin-bottom: var(--space-2);
+}
+.checks .check {
+  min-height: auto;
+  font-size: var(--fs-small);
+}
+
+/* Explicacao da nota: aberta so quando alguem pergunta. */
+.legend {
+  margin-top: var(--space-5);
+  max-width: 46ch;
+  font-size: var(--fs-small);
+}
+.legend summary {
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.legend summary:hover {
+  color: var(--terracota-dark);
+}
+.legend-list {
+  list-style: none;
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--paper-3);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-md);
+}
+.legend-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 0.25rem 0;
+}
+.legend-list strong {
+  font-variant-numeric: tabular-nums;
+  color: var(--terracota-dark);
+}
+.legend-note {
+  color: var(--text-muted);
 }
 
 /* ── Estado de uma busca em andamento ────────────────────── */

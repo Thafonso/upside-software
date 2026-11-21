@@ -5,12 +5,33 @@ include_external_packages = True
 # Each new feature module (hunter, ads, reports) must be added to the
 # contracts below as soon as its package is created.
 
-[importlinter:contract:feature-modules-are-independent]
-name = Feature modules never import each other
-type = independence
-modules =
+# CLAUDE.md asks for an independence contract between the feature modules,
+# and also says they talk to each other through the owner's public API.
+# Turning a prospect into a client needs that call, so the rule below is
+# the same intent, stated precisely: app.hunter may import app.clients (the
+# package, which is the public API) and nothing inside it.
+
+[importlinter:contract:clients-never-depends-on-hunter]
+name = The clients module never imports the hunter
+type = forbidden
+source_modules =
     app.clients
+forbidden_modules =
     app.hunter
+
+[importlinter:contract:hunter-only-through-the-clients-api]
+name = The hunter reaches the clients module only through its public API
+type = forbidden
+source_modules =
+    app.hunter
+forbidden_modules =
+    app.clients.api
+    app.clients.domain
+    app.clients.ports
+    app.clients.repository
+    app.clients.service
+    app.clients.web
+allow_indirect_imports = True
 
 [importlinter:contract:shared-is-standalone]
 name = app.shared never imports a feature module

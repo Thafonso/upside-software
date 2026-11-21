@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -17,14 +18,18 @@ from app.shared.jobs.registry import (
     is_registered,
     job_handler,
     registered_types,
+    restore_handlers,
+    snapshot_handlers,
 )
 
 
 @pytest.fixture(autouse=True)
-def _clean_registry():
+def _isolated_registry() -> Iterator[None]:
+    """Start from an empty registry and put the real handlers back after."""
+    saved = snapshot_handlers()
     clear_handlers()
     yield
-    clear_handlers()
+    restore_handlers(saved)
 
 
 # ── Backoff ───────────────────────────────────────────────────

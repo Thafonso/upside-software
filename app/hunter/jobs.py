@@ -7,10 +7,11 @@ from typing import Any
 from uuid import UUID
 
 from app.hunter.adapters.mazyos_scraper import scraper_provider
+from app.hunter.adapters.site_checker import website_inspector
 from app.hunter.repository import SqlAlchemyHunterRepository
 from app.hunter.service import HunterService, PollOutcome, StartOutcome
 from app.shared.config import get_settings
-from app.shared.jobs import JobContext, RetryLater, enqueue, is_registered, job_handler
+from app.shared.jobs import JobContext, RetryLater, enqueue, job_handler
 
 logger = logging.getLogger("app.hunter.jobs")
 
@@ -70,9 +71,20 @@ async def poll_scrape(payload: dict[str, Any], ctx: JobContext) -> None:
     if outcome != PollOutcome.DONE:
         return
 
-    # Step 4 registers the site check; until then there is nothing to
-    # enqueue and a job with no handler would only pile up failures.
-    if is_registered(CHECK_SITES):
-        await enqueue(ctx.session, CHECK_SITES, {"search_id": str(search_id)})
-    else:
-        logger.info("site check not registered yet, skipping it for %s", search_id)
+    await enqueue(ctx.session, CHECK_SITES, {"search_id": str(search_id)})
+
+
+@job_handler(CHECK_SITES)
+async def check_sites(payload: dict[str, Any], ctx: JobContext) -> None:
+    """Visit the prospects' own sites and score them again.
+
+    Idempotent: only prospects never visited are picked up, so running the
+    job twice costs nothing and a crash halfway simply resumes.
+    """
+    search_id = _search_id(payload)
+    service = _service(ctx)
+
+    async with website_inspector() as inspector:
+        checked = await service.check_sites(search_id, inspector)
+
+    logger.info("search %s had %s site(s) checked", search_id, checked)

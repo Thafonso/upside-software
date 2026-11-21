@@ -23,6 +23,8 @@ from app.shared.jobs.registry import (
     RetryLater,
     clear_handlers,
     job_handler,
+    restore_handlers,
+    snapshot_handlers,
 )
 from app.shared.jobs.runner import run_next
 from app.shared.jobs.scheduler import ScheduledJob, build_scheduler
@@ -34,10 +36,12 @@ pytestmark = pytest.mark.integration
 
 
 @pytest.fixture(autouse=True)
-def _clean_registry() -> Iterator[None]:
+def _isolated_registry() -> Iterator[None]:
+    """Start from an empty registry and put the real handlers back after."""
+    saved = snapshot_handlers()
     clear_handlers()
     yield
-    clear_handlers()
+    restore_handlers(saved)
 
 
 async def _reload(job_id: UUID) -> Job:

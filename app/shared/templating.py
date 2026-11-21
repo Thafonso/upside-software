@@ -6,6 +6,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
@@ -88,6 +89,12 @@ def format_site(url: str | None, limit: int = 28) -> str:
     return shown if len(shown) <= limit else f"{shown[: limit - 1]}…"
 
 
+def urlencode_params(values: dict[str, str]) -> str:
+    """Carry the current filters onto a link: '?a=1&b=2', or '' if empty."""
+    kept = {key: value for key, value in values.items() if value}
+    return f"?{urlencode(kept)}" if kept else ""
+
+
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["brl"] = format_brl
 templates.env.filters["num"] = format_number
@@ -96,6 +103,7 @@ templates.env.filters["datetime_br"] = format_datetime_br
 templates.env.filters["pct_br"] = format_percent_br
 templates.env.filters["phone_br"] = format_phone_br
 templates.env.filters["site_br"] = format_site
+templates.env.filters["urlencode_params"] = urlencode_params
 templates.env.globals["app_name"] = "LeadHunter"
 templates.env.globals["brand_name"] = "Upside"
 

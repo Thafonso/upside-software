@@ -14,13 +14,18 @@ from app.hunter.domain import (
     DailyLimitReached,
     FoundCompany,
     Prospect,
+    ProspectFilters,
+    ProspectStatus,
     ScrapeStatus,
     Search,
     SearchInput,
     SearchStatus,
     build_search_input,
+    score_for,
+    signals_for,
 )
 from app.hunter.ports import ScraperError
+from app.hunter.scoring import WebsiteType
 from app.hunter.service import HunterService, PollOutcome, SearchNotFound, StartOutcome
 
 NOW = datetime(2026, 11, 21, 12, 0, tzinfo=UTC)
@@ -32,6 +37,7 @@ class FakeHunterRepository:
     def __init__(self) -> None:
         self.searches: dict[UUID, Search] = {}
         self.prospects: dict[UUID, list[FoundCompany]] = {}
+        self.rows: dict[UUID, Prospect] = {}
         self.created_today = 0
 
     async def create_search(
@@ -113,10 +119,112 @@ class FakeHunterRepository:
 
     async def list_prospects(self, search_id: UUID, *, limit: int = 500) -> list[Prospect]:
         assert limit > 0
-        return []
+        return [item for item in self.rows.values() if item.search_id == search_id]
 
     async def count_prospects(self, search_id: UUID) -> int:
         return len(self.prospects.get(search_id, []))
+
+    # ── qualificação ──────────────────────────────────────────
+
+    def add_prospect(self, prospect: Prospect) -> Prospect:
+        self.rows[prospect.id] = prospect
+        return prospect
+
+    def _matching(self, filters: ProspectFilters) -> list[Prospect]:
+        found = [item for item in self.rows.values() if not item.do_not_contact]
+        if filters.search_id is not None:
+            found = [item for item in found if item.search_id == filters.search_id]
+        if filters.status is not None:
+            found = [item for item in found if item.status == filters.status]
+        if filters.no_website:
+            found = [item for item in found if item.website_type == WebsiteType.NONE]
+        if filters.social_only:
+            found = [item for item in found if item.website_type == WebsiteType.SOCIAL]
+        if filters.has_whatsapp:
+            found = [item for item in found if item.whatsapp]
+        if filters.has_email:
+            found = [item for item in found if item.emails]
+        if filters.min_score:
+            found = [item for item in found if item.score >= filters.min_score]
+        return sorted(found, key=lambda item: (-item.score, -item.review_count))
+
+    async def search_prospects(
+        self, filters: ProspectFilters, *, limit: int = 500
+    ) -> list[Prospect]:
+        return self._matching(filters)[:limit]
+
+    async def count_filtered(self, filters: ProspectFilters) -> int:
+        return len(self._matching(filters))
+
+    async def get_prospect(self, prospect_id: UUID) -> Prospect | None:
+        return self.rows.get(prospect_id)
+
+    async def set_prospect_status(
+        self, prospect_id: UUID, status: ProspectStatus
+    ) -> Prospect | None:
+        current = self.rows.get(prospect_id)
+        if current is None:
+            return None
+        self.rows[prospect_id] = dataclasses.replace(current, status=status)
+        return self.rows[prospect_id]
+
+    async def set_do_not_contact(self, prospect_id: UUID, *, flag: bool = True) -> Prospect | None:
+        current = self.rows.get(prospect_id)
+        if current is None:
+            return None
+        self.rows[prospect_id] = dataclasses.replace(current, do_not_contact=flag)
+        return self.rows[prospect_id]
+
+    async def attach_client(self, prospect_id: UUID, client_id: UUID) -> Prospect | None:
+        current = self.rows.get(prospect_id)
+        if current is None:
+            return None
+        self.rows[prospect_id] = dataclasses.replace(
+            current, client_id=client_id, status=ProspectStatus.WON
+        )
+        return self.rows[prospect_id]
+
+    async def list_for_site_check(self, search_id: UUID) -> list[Prospect]:
+        return [
+            item
+            for item in self.rows.values()
+            if item.search_id == search_id
+            and item.website_type == WebsiteType.SITE
+            and item.site_checked_at is None
+        ]
+
+    async def apply_site_check(
+        self,
+        prospect_id: UUID,
+        *,
+        has_meta_pixel: bool | None,
+        has_instagram: bool | None,
+        has_whatsapp_link: bool | None,
+        unreachable: bool,
+    ) -> Prospect | None:
+        current = self.rows.get(prospect_id)
+        if current is None:
+            return None
+        signals = signals_for(
+            phone=current.phone,
+            website=current.website,
+            emails=current.emails,
+            review_count=current.review_count,
+            review_rating=current.review_rating,
+            has_meta_pixel=has_meta_pixel,
+        )
+        score = score_for(signals)
+        self.rows[prospect_id] = dataclasses.replace(
+            current,
+            has_meta_pixel=has_meta_pixel,
+            has_instagram=has_instagram,
+            has_whatsapp_link=has_whatsapp_link,
+            site_unreachable=unreachable,
+            site_checked_at=NOW,
+            score=score.value,
+            score_details=score.details,
+        )
+        return self.rows[prospect_id]
 
 
 class FakeProvider:

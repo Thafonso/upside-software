@@ -1,0 +1,189 @@
+{#
+  Fragmento HTMX: contagem, barra de ações e tabela de empresas.
+  Cada ação de linha devolve este bloco inteiro, já refiltrado.
+#}
+{% macro filter_fields() %}
+<input type="hidden" name="search_id" value="{{ query.search_id }}" />
+<input type="hidden" name="filter_status" value="{{ query.status }}" />
+<input type="hidden" name="no_website" value="{{ query.no_website }}" />
+<input type="hidden" name="social_only" value="{{ query.social_only }}" />
+<input type="hidden" name="has_whatsapp" value="{{ query.has_whatsapp }}" />
+<input type="hidden" name="has_email" value="{{ query.has_email }}" />
+<input type="hidden" name="min_score" value="{{ query.min_score }}" />
+{% endmacro %}
+
+{% set qs = query | urlencode_params %}
+
+<div class="list-bar">
+  <p class="toolbar-count">
+    {{ total|num }} empresa{{ '' if total == 1 else 's' }}
+  </p>
+  <div class="list-bar-actions">
+    <button
+      class="btn btn--quiet btn--sm"
+      type="button"
+      data-copy-phones="/hunter/prospects/phones{{ qs }}"
+    >
+      Copiar telefones
+    </button>
+    <a class="btn btn--quiet btn--sm" href="/hunter/prospects.csv{{ qs }}">
+      Exportar CSV
+    </a>
+  </div>
+</div>
+
+{% if prospects %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Empresa</th>
+        <th scope="col" class="num">Nota</th>
+        <th scope="col" class="num">Avaliações</th>
+        <th scope="col">Contato</th>
+        <th scope="col">Presença digital</th>
+        <th scope="col">Bairro</th>
+        <th scope="col" class="shrink">Situação</th>
+        <th scope="col" class="shrink"><span class="sr-only">Ações</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for prospect in prospects %}
+      <tr>
+        <td>
+          <a
+            class="entity-name"
+            href="{{ prospect.maps_link }}"
+            target="_blank"
+            rel="noopener"
+            title="Abrir no Google Maps"
+            >{{ prospect.name }}</a
+          >
+          <span class="entity-meta">{{ prospect.category or 'sem categoria' }}</span>
+        </td>
+
+        <td class="num">
+          <span class="score" title="{{ prospect.score_explanation }}">
+            <span class="score-value">{{ prospect.score }}</span>
+            <span class="score-bar" aria-hidden="true">
+              <span class="score-bar-fill" style="width: {{ prospect.score }}%"></span>
+            </span>
+          </span>
+        </td>
+
+        <td class="num">
+          {% if prospect.review_count %}
+          {{ prospect.review_count|num }}
+          {% if prospect.review_rating %}
+          <span class="entity-meta">{{ prospect.review_rating|num(1) }}</span>
+          {% endif %}
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+
+        <td class="nowrap">
+          {% if prospect.whatsapp_link %}
+          <a href="{{ prospect.whatsapp_link }}" target="_blank" rel="noopener">
+            {{ prospect.whatsapp|phone_br }}
+          </a>
+          {% elif prospect.phone %}
+          {{ prospect.phone }}
+          {% else %}
+          <span class="muted">—</span>
+          {% endif %}
+          {% if prospect.first_email %}
+          <a class="entity-meta" href="mailto:{{ prospect.first_email }}">
+            {{ prospect.first_email }}
+          </a>
+          {% endif %}
+        </td>
+
+        <td>
+          {% if prospect.website %}
+          <a
+            href="{{ prospect.website }}"
+            target="_blank"
+            rel="noopener nofollow"
+            title="{{ prospect.website }}"
+            >{{ prospect.website|site_br(20) }}</a
+          >
+          <span class="entity-meta">
+            {% if prospect.website_type.value == 'site' %}
+              {% if prospect.site_unreachable %}fora do ar
+              {% elif prospect.has_meta_pixel is none %}pixel não verificado
+              {% elif prospect.has_meta_pixel %}com pixel da Meta
+              {% else %}sem pixel da Meta{% endif %}
+            {% else %}
+              só rede social
+            {% endif %}
+          </span>
+          {% else %}
+          <span class="muted">sem site</span>
+          {% endif %}
+        </td>
+
+        <td>{{ prospect.borough or '—' }}</td>
+
+        <td class="shrink">
+          <form>
+            {{ filter_fields() }}
+            <label class="sr-only" for="st-{{ prospect.id }}">
+              Situação de {{ prospect.name }}
+            </label>
+            <select
+              class="select select--sm"
+              id="st-{{ prospect.id }}"
+              name="status"
+              hx-post="/hunter/prospects/{{ prospect.id }}/status"
+              hx-include="closest form"
+              hx-target="#prospect-results"
+              hx-swap="innerHTML"
+            >
+              {% for item in statuses %}
+              <option value="{{ item.value }}" {% if item == prospect.status %}selected{% endif %}>
+                {{ item.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+
+        <td class="shrink">
+          <form
+            hx-post="/hunter/prospects/{{ prospect.id }}/do-not-contact"
+            hx-target="#prospect-results"
+            hx-swap="innerHTML"
+            hx-confirm="Tirar {{ prospect.name }} das listas para sempre?"
+          >
+            {{ filter_fields() }}
+            <button class="btn btn--danger btn--sm" type="submit">Não contatar</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if prospects|length == limit %}
+<p class="list-note">
+  Mostrando as {{ limit }} primeiras. Use os filtros para chegar no que
+  interessa — a exportação leva a lista inteira.
+</p>
+{% endif %}
+
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    {% if filters.is_filtered %}
+    <p class="empty-title">Nenhuma empresa nesse filtro</p>
+    <p>Afrouxe a nota mínima ou desmarque algum sinal para ver mais.</p>
+    {% else %}
+    <p class="empty-title">Nada encontrado ainda</p>
+    <p>
+      Rode uma busca por nicho e bairro: as empresas aparecem aqui já com nota e
+      sinais, prontas para trabalhar.
+    </p>
+    <a class="btn btn--primary" href="/hunter/searches/new">Nova busca</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

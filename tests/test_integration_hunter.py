@@ -383,14 +383,14 @@ async def _sign_in(http: httpx.AsyncClient) -> None:
 
 
 async def test_hunter_needs_a_session(client: httpx.AsyncClient) -> None:
-    response = await client.get("/hunter")
+    response = await client.get("/hunter/searches")
     assert response.status_code == 303
-    assert response.headers["location"] == "/login?next=/hunter"
+    assert response.headers["location"] == "/login?next=/hunter/searches"
 
 
 async def test_empty_hunter_screen_invites_a_search(client: httpx.AsyncClient) -> None:
     await _sign_in(client)
-    response = await client.get("/hunter")
+    response = await client.get("/hunter/searches")
     assert response.status_code == 200
     assert "Nenhuma busca ainda" in response.text
 
