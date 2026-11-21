@@ -3,17 +3,23 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Iterable
 from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from app.ads.domain import (
     RESYNC_DAYS,
     AccountStatus,
     AdAccount,
+    CampaignTotals,
+    ClientPanelRow,
+    DailyPoint,
+    Period,
     SyncKind,
     SyncOutcome,
     SyncStatus,
+    Totals,
     sync_window,
     to_daily_row,
 )
@@ -206,3 +212,70 @@ class AdsService:
             status=SyncStatus.OK,
             rows_written=rows_written,
         )
+
+    # ── painel ────────────────────────────────────────────────
+
+    async def panel_rows(self, period: Period) -> list[ClientPanelRow]:
+        """One row per client that has an ad account, biggest spender first."""
+        accounts = await self._repository.list_accounts()
+        if not accounts:
+            return []
+
+        by_account = await self._repository.totals_by_account(period.since, period.until)
+
+        grouped: dict[UUID, list[AdAccount]] = {}
+        for account in accounts:
+            grouped.setdefault(account.client_id, []).append(account)
+
+        rows: list[ClientPanelRow] = []
+        for client_id, owned in grouped.items():
+            client = await self._clients.get_client(client_id)
+            totals = _add_up(by_account.get(account.id, Totals()) for account in owned)
+            rows.append(
+                ClientPanelRow(
+                    client_id=client_id,
+                    client_name=client.name if client else "Cliente removido",
+                    account_ids=tuple(account.id for account in owned),
+                    totals=totals,
+                )
+            )
+
+        return sorted(rows, key=lambda row: (-row.totals.spend, row.client_name.lower()))
+
+    async def client_totals(self, client_id: UUID, period: Period) -> Totals:
+        return await self._repository.totals_for(
+            await self._account_ids(client_id), period.since, period.until
+        )
+
+    async def client_series(self, client_id: UUID, period: Period) -> list[DailyPoint]:
+        return await self._repository.daily_series(
+            await self._account_ids(client_id), period.since, period.until
+        )
+
+    async def client_campaigns(self, client_id: UUID, period: Period) -> list[CampaignTotals]:
+        return await self._repository.campaign_totals(
+            await self._account_ids(client_id), period.since, period.until
+        )
+
+    async def _account_ids(self, client_id: UUID) -> tuple[str, ...]:
+        accounts = await self._repository.list_accounts(client_id=client_id)
+        return tuple(account.id for account in accounts)
+
+
+def _add_up(totals: Iterable[Totals]) -> Totals:
+    """Add several accounts of one client together."""
+    spend = Decimal("0.00")
+    results = impressions = reach = link_clicks = 0
+    for item in totals:
+        spend += item.spend
+        results += item.results
+        impressions += item.impressions
+        reach += item.reach
+        link_clicks += item.link_clicks
+    return Totals(
+        spend=spend,
+        results=results,
+        impressions=impressions,
+        reach=reach,
+        link_clicks=link_clicks,
+    )

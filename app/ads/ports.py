@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import date, datetime
 from typing import Protocol
 from uuid import UUID
@@ -10,11 +11,14 @@ from app.ads.domain import (
     AccountStatus,
     AdAccount,
     Campaign,
+    CampaignTotals,
     DailyInsight,
+    DailyPoint,
     DailyRow,
     SyncKind,
     SyncOutcome,
     SyncStatus,
+    Totals,
 )
 
 
@@ -101,3 +105,15 @@ class AdsRepository(Protocol):
     ) -> None: ...
 
     async def recent_syncs(self, *, limit: int = 50) -> list[SyncOutcome]: ...
+
+    async def totals_for(self, account_ids: Sequence[str], since: date, until: date) -> Totals: ...
+
+    async def daily_series(
+        self, account_ids: Sequence[str], since: date, until: date
+    ) -> list[DailyPoint]: ...
+
+    async def campaign_totals(
+        self, account_ids: Sequence[str], since: date, until: date
+    ) -> list[CampaignTotals]: ...
+
+    async def totals_by_account(self, since: date, until: date) -> dict[str, Totals]: ...

@@ -1,0 +1,158 @@
+{% extends "base.html" %} {% block title %}{{ client.name }}{% endblock %} {%
+block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">{{ client.name }}</h1>
+    <p class="page-subtitle">
+      Resultado contado: {{ client.result_label|lower }}.
+      {% if accounts|length == 1 %}Conta {{ accounts[0].id }}.
+      {% elif accounts %}{{ accounts|length }} contas de anúncios.{% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--quiet" href="/ads">Todos os clientes</a>
+  </div>
+</header>
+
+{% with action = '/ads/clients/' ~ client.id %}{% include "ads/_period.html" %}{%
+endwith %}
+
+{% if totals.has_data %}
+<div class="kpis">
+  <div class="kpi">
+    <span class="kpi-label">Investimento</span>
+    <span class="kpi-value">{{ totals.spend|brl }}</span>
+  </div>
+  <div class="kpi">
+    <span class="kpi-label">Resultados</span>
+    <span class="kpi-value">{{ totals.results|num }}</span>
+  </div>
+  <div class="kpi">
+    <span class="kpi-label">Custo por resultado</span>
+    <span class="kpi-value">
+      {% if totals.cost_per_result %}{{ totals.cost_per_result|brl }}
+      {% else %}—{% endif %}
+    </span>
+  </div>
+  <div class="kpi">
+    <span class="kpi-label">Cliques no link</span>
+    <span class="kpi-value">{{ totals.link_clicks|num }}</span>
+    <span class="kpi-note">{{ totals.impressions|num }} impressões</span>
+  </div>
+</div>
+
+{#
+  Dois gráficos empilhados, não um com dois eixos: investimento e resultados
+  têm escalas diferentes, e sobrepor as duas numa só inventa uma correlação
+  que não está no dado. Mesmo eixo de dias nos dois, para a leitura casar.
+#}
+<section class="charts">
+  <figure class="chart-card">
+    <figcaption class="chart-title">Investimento por dia</figcaption>
+    <div class="chart-box"><canvas id="chart-spend" height="180"></canvas></div>
+  </figure>
+
+  <figure class="chart-card">
+    <figcaption class="chart-title">Resultados por dia</figcaption>
+    <div class="chart-box"><canvas id="chart-results" height="180"></canvas></div>
+  </figure>
+</section>
+
+<details class="legend">
+  <summary>Ver os números dia a dia</summary>
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Dia</th>
+          <th scope="col" class="num">Investimento</th>
+          <th scope="col" class="num">Resultados</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for index in range(chart.days|length) %}
+        <tr>
+          <td class="nowrap">{{ chart.days[index] }}</td>
+          <td class="num">{{ chart.spend[index]|brl }}</td>
+          <td class="num">{{ chart.results[index]|num }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<section class="form-section">
+  <h2 class="form-section-title">Por campanha</h2>
+  {% if campaigns %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Campanha</th>
+          <th scope="col" class="num">Investimento</th>
+          <th scope="col" class="num">Resultados</th>
+          <th scope="col" class="num">Custo por resultado</th>
+          <th scope="col" class="num">Cliques</th>
+          <th scope="col" class="num">Impressões</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for campaign in campaigns %}
+        <tr>
+          <td>
+            <span class="entity-name">{{ campaign.name }}</span>
+            <span class="entity-meta">
+              {{ 'em veiculação' if campaign.is_running else campaign.status|lower }}
+            </span>
+          </td>
+          <td class="num">{{ campaign.spend|brl }}</td>
+          <td class="num">{{ campaign.results|num }}</td>
+          <td class="num">
+            {% if campaign.cost_per_result %}{{ campaign.cost_per_result|brl }}
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td class="num">{{ campaign.link_clicks|num }}</td>
+          <td class="num">{{ campaign.impressions|num }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="empty">
+      <p class="empty-title">Nenhuma campanha com gasto no período</p>
+      <p>Troque o período acima para ver outro intervalo.</p>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    <p class="empty-title">Sem dados neste período</p>
+    <p>
+      {% if accounts %} A conta está vinculada, mas ainda não há métricas para
+      estas datas. A sincronização roda de hora em hora. {% else %} Este cliente
+      ainda não tem conta de anúncios vinculada. {% endif %}
+    </p>
+    {% if user.is_admin and not accounts %}
+    <a class="btn btn--primary" href="/ads/accounts">Vincular uma conta</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if totals.has_data %}
+<script type="application/json" id="chart-data">{{ chart|tojson }}</script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"
+  defer
+></script>
+<script src="/static/js/charts.js" defer></script>
+{% endif %}
+{% endblock %}

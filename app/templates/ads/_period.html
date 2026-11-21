@@ -1,0 +1,40 @@
+{#
+  Filtro de período. Um formulário GET simples: a URL carrega o período,
+  então a tela filtrada pode ser salva nos favoritos ou mandada por mensagem.
+#}
+<form class="toolbar period-bar" method="get" action="{{ action }}">
+  <div class="field">
+    <label for="preset">Período</label>
+    <select class="select" id="preset" name="preset" onchange="this.form.submit()">
+      {% for item in presets %}
+      <option value="{{ item.value }}" {% if period.preset == item %}selected{% endif %}>
+        {{ item.label }}
+      </option>
+      {% endfor %}
+      {% if period.preset is none %}
+      <option value="" selected>{{ period.label }}</option>
+      {% endif %}
+    </select>
+  </div>
+
+  <div class="field">
+    <label for="since">De</label>
+    <input class="input" id="since" name="since" type="date" value="{{ period.since }}" />
+  </div>
+
+  <div class="field">
+    <label for="until">Até</label>
+    <input class="input" id="until" name="until" type="date" value="{{ period.until }}" />
+  </div>
+
+  <div class="field">
+    <span class="sr-only" id="apply-hint">Aplicar o período escolhido</span>
+    <button class="btn btn--ink" type="submit" aria-describedby="apply-hint">
+      Aplicar
+    </button>
+  </div>
+
+  <p class="toolbar-count">
+    {{ period.since|date_br }} a {{ period.until|date_br }}
+  </p>
+</form>

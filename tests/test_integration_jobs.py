@@ -257,15 +257,16 @@ async def test_failure_schedules_a_retry_with_backoff(
     job_id = await _enqueue("test.boom")
     before = now_utc()
     await run_next(get_sessionmaker())
+    after = now_utc()
 
     job = await _reload(job_id)
     assert JobStatus(job.status) == JobStatus.QUEUED
     assert job.attempts == 1
     assert job.last_error is not None
     assert "falhou de proposito" in job.last_error
-    # First retry waits two minutes.
-    assert job.run_after >= before + timedelta(minutes=1, seconds=50)
-    assert job.run_after <= before + timedelta(minutes=2, seconds=10)
+    # The first retry waits exactly two minutes from some instant during the
+    # run, so bracket it instead of guessing how long the run took.
+    assert before + timedelta(minutes=2) <= job.run_after <= after + timedelta(minutes=2)
 
 
 async def test_job_fails_for_good_after_max_attempts(
@@ -322,13 +323,13 @@ async def test_retry_later_does_not_count_an_attempt(
     job_id = await _enqueue("test.wait")
     before = now_utc()
     await run_next(get_sessionmaker())
+    after = now_utc()
 
     job = await _reload(job_id)
     assert JobStatus(job.status) == JobStatus.QUEUED
     assert job.attempts == 0
     assert job.last_error is None
-    assert job.run_after >= before + timedelta(seconds=18)
-    assert job.run_after <= before + timedelta(seconds=25)
+    assert before + timedelta(seconds=20) <= job.run_after <= after + timedelta(seconds=20)
 
 
 async def test_a_job_can_enqueue_the_next_one(clean_tables: AsyncSession) -> None:

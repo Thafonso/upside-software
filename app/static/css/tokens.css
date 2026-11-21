@@ -87,4 +87,14 @@
   --fs-figure: clamp(1.8rem, 2.6vw, 2.5rem);
 
   --tracking-wide: 0.14em;
+
+  /* ----------------------------------------------------------
+     GRÁFICOS
+     O terracota da marca para dinheiro. O azul é a única cor
+     fora da paleta: o verde da identidade reprova na validação
+     de daltonismo (protan ΔE 3,2 contra o terracota) e lê como
+     cinza. Este par passa nas seis checagens sobre o papel.
+  ---------------------------------------------------------- */
+  --chart-spend: #b85f40;
+  --chart-results: #1f6fbf;
 }

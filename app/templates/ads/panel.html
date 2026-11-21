@@ -1,0 +1,77 @@
+{% extends "base.html" %} {% block title %}Anúncios{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Anúncios</h1>
+    <p class="page-subtitle">
+      O que cada cliente investiu no período e o que isso trouxe. Os números vêm
+      da Meta e são atualizados de hora em hora.
+    </p>
+  </div>
+  {% if user.is_admin %}
+  <div class="page-actions">
+    <a class="btn btn--quiet" href="/ads/accounts">Contas</a>
+  </div>
+  {% endif %}
+</header>
+
+{% with action = '/ads' %}{% include "ads/_period.html" %}{% endwith %}
+
+{% if rows %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Cliente</th>
+        <th scope="col" class="num">Investimento</th>
+        <th scope="col" class="num">Resultados</th>
+        <th scope="col" class="num">Custo por resultado</th>
+        <th scope="col" class="num">Cliques no link</th>
+        <th scope="col" class="shrink"><span class="sr-only">Abrir</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>
+          <a class="entity-name" href="/ads/clients/{{ row.client_id }}?preset={{ period.preset.value if period.preset else '' }}&since={{ period.since }}&until={{ period.until }}">
+            {{ row.client_name }}
+          </a>
+          <span class="entity-meta">
+            {{ row.account_ids|length }} conta{{ '' if row.account_ids|length == 1 else 's' }}
+          </span>
+        </td>
+        <td class="num">{{ row.totals.spend|brl }}</td>
+        <td class="num">{{ row.totals.results|num }}</td>
+        <td class="num">
+          {% if row.totals.cost_per_result %}{{ row.totals.cost_per_result|brl }}
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td class="num">{{ row.totals.link_clicks|num }}</td>
+        <td class="shrink">
+          <a
+            class="btn btn--quiet btn--sm"
+            href="/ads/clients/{{ row.client_id }}?preset={{ period.preset.value if period.preset else '' }}&since={{ period.since }}&until={{ period.until }}"
+            >Abrir</a
+          >
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    <p class="empty-title">Nenhuma conta vinculada ainda</p>
+    <p>
+      Assim que a conta de anúncios de um cliente for vinculada, o investimento e
+      os resultados dele aparecem aqui.
+    </p>
+    {% if user.is_admin %}
+    <a class="btn btn--primary" href="/ads/accounts">Vincular uma conta</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

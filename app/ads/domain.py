@@ -174,6 +174,133 @@ class SyncOutcome:
         return self.status == SyncStatus.OK
 
 
+class PeriodPreset(StrEnum):
+    """The ranges the panel offers. Anything else is a custom range."""
+
+    THIS_MONTH = "this_month"
+    LAST_MONTH = "last_month"
+    LAST_7 = "last_7"
+    LAST_30 = "last_30"
+
+    @property
+    def label(self) -> str:
+        return {
+            PeriodPreset.THIS_MONTH: "Este mês",
+            PeriodPreset.LAST_MONTH: "Mês passado",
+            PeriodPreset.LAST_7: "Últimos 7 dias",
+            PeriodPreset.LAST_30: "Últimos 30 dias",
+        }[self]
+
+
+@dataclass(frozen=True, slots=True)
+class Period:
+    """An inclusive range of days the panel is showing."""
+
+    since: date
+    until: date
+    preset: PeriodPreset | None = None
+
+    @property
+    def label(self) -> str:
+        if self.preset is not None:
+            return self.preset.label
+        return f"{self.since.strftime('%d/%m/%Y')} a {self.until.strftime('%d/%m/%Y')}"
+
+    @property
+    def days(self) -> int:
+        return (self.until - self.since).days + 1
+
+    def previous(self) -> Period:
+        """The stretch of the same length right before this one."""
+        length = timedelta(days=self.days)
+        return Period(since=self.since - length, until=self.since - timedelta(days=1))
+
+
+def month_bounds(day: date) -> tuple[date, date]:
+    first = day.replace(day=1)
+    next_first = (first + timedelta(days=32)).replace(day=1)
+    return first, next_first - timedelta(days=1)
+
+
+def resolve_period(preset: PeriodPreset, today: date) -> Period:
+    if preset == PeriodPreset.THIS_MONTH:
+        first, _ = month_bounds(today)
+        return Period(since=first, until=today, preset=preset)
+    if preset == PeriodPreset.LAST_MONTH:
+        first_of_this, _ = month_bounds(today)
+        first, last = month_bounds(first_of_this - timedelta(days=1))
+        return Period(since=first, until=last, preset=preset)
+    span = 7 if preset == PeriodPreset.LAST_7 else 30
+    return Period(since=today - timedelta(days=span - 1), until=today, preset=preset)
+
+
+@dataclass(frozen=True, slots=True)
+class Totals:
+    """What a period added up to."""
+
+    spend: Decimal = Decimal("0.00")
+    results: int = 0
+    impressions: int = 0
+    reach: int = 0
+    link_clicks: int = 0
+
+    @property
+    def cost_per_result(self) -> Decimal | None:
+        if not self.results:
+            return None
+        return (self.spend / self.results).quantize(Decimal("0.01"))
+
+    @property
+    def has_data(self) -> bool:
+        return bool(self.spend or self.impressions or self.results)
+
+
+@dataclass(frozen=True, slots=True)
+class DailyPoint:
+    """One day on the chart."""
+
+    day: date
+    spend: Decimal
+    results: int
+
+
+@dataclass(frozen=True, slots=True)
+class CampaignTotals:
+    """One campaign over the period."""
+
+    campaign_id: str
+    name: str
+    status: str
+    spend: Decimal
+    results: int
+    impressions: int
+    link_clicks: int
+
+    @property
+    def cost_per_result(self) -> Decimal | None:
+        if not self.results:
+            return None
+        return (self.spend / self.results).quantize(Decimal("0.01"))
+
+    @property
+    def is_running(self) -> bool:
+        return self.status.upper() == "ACTIVE"
+
+
+@dataclass(frozen=True, slots=True)
+class ClientPanelRow:
+    """A client as the panel list shows it."""
+
+    client_id: UUID
+    client_name: str
+    account_ids: tuple[str, ...]
+    totals: Totals
+
+    @property
+    def has_accounts(self) -> bool:
+        return bool(self.account_ids)
+
+
 def sync_window(today: date, *, days: int = RESYNC_DAYS) -> tuple[date, date]:
     """The inclusive range a resync covers, ending today."""
     return today - timedelta(days=days - 1), today

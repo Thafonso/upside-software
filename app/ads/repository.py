@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
@@ -26,10 +27,13 @@ from app.ads.domain import (
     AccountStatus,
     AdAccount,
     Campaign,
+    CampaignTotals,
+    DailyPoint,
     DailyRow,
     SyncKind,
     SyncOutcome,
     SyncStatus,
+    Totals,
 )
 from app.shared.clock import now_utc
 from app.shared.db import Base, CreatedAt, EnumAsString, Timestamptz, UpdatedAt, UuidPk
@@ -296,6 +300,129 @@ class SqlAlchemyAdsRepository:
             )
         ).scalars()
         return list(rows)
+
+    # ── agregações do painel ──────────────────────────────────
+
+    def _period_filter(self, account_ids: Sequence[str], since: date, until: date):
+        return (
+            CampaignDailyRow.account_id.in_(list(account_ids)),
+            CampaignDailyRow.date >= since,
+            CampaignDailyRow.date <= until,
+        )
+
+    async def totals_for(self, account_ids: Sequence[str], since: date, until: date) -> Totals:
+        """Everything the cards need, in one pass over the period."""
+        if not account_ids:
+            return Totals()
+
+        row = (
+            await self._session.execute(
+                select(
+                    func.coalesce(func.sum(CampaignDailyRow.spend), 0),
+                    func.coalesce(func.sum(CampaignDailyRow.results), 0),
+                    func.coalesce(func.sum(CampaignDailyRow.impressions), 0),
+                    func.coalesce(func.sum(CampaignDailyRow.reach), 0),
+                    func.coalesce(func.sum(CampaignDailyRow.link_clicks), 0),
+                ).where(*self._period_filter(account_ids, since, until))
+            )
+        ).one()
+
+        return Totals(
+            spend=Decimal(row[0]).quantize(Decimal("0.01")),
+            results=int(row[1]),
+            impressions=int(row[2]),
+            # Reach cannot honestly be summed across days - the same person is
+            # counted again - so this is an upper bound, shown as such.
+            reach=int(row[3]),
+            link_clicks=int(row[4]),
+        )
+
+    async def daily_series(
+        self, account_ids: Sequence[str], since: date, until: date
+    ) -> list[DailyPoint]:
+        """One point per day that has data, oldest first."""
+        if not account_ids:
+            return []
+
+        rows = await self._session.execute(
+            select(
+                CampaignDailyRow.date,
+                func.coalesce(func.sum(CampaignDailyRow.spend), 0),
+                func.coalesce(func.sum(CampaignDailyRow.results), 0),
+            )
+            .where(*self._period_filter(account_ids, since, until))
+            .group_by(CampaignDailyRow.date)
+            .order_by(CampaignDailyRow.date)
+        )
+        return [
+            DailyPoint(
+                day=row[0],
+                spend=Decimal(row[1]).quantize(Decimal("0.01")),
+                results=int(row[2]),
+            )
+            for row in rows
+        ]
+
+    async def campaign_totals(
+        self, account_ids: Sequence[str], since: date, until: date
+    ) -> list[CampaignTotals]:
+        """Per campaign over the period, biggest spender first."""
+        if not account_ids:
+            return []
+
+        rows = await self._session.execute(
+            select(
+                CampaignDailyRow.campaign_id,
+                func.coalesce(func.max(CampaignRow.name), CampaignDailyRow.campaign_id),
+                func.coalesce(func.max(CampaignRow.status), "UNKNOWN"),
+                func.coalesce(func.sum(CampaignDailyRow.spend), 0),
+                func.coalesce(func.sum(CampaignDailyRow.results), 0),
+                func.coalesce(func.sum(CampaignDailyRow.impressions), 0),
+                func.coalesce(func.sum(CampaignDailyRow.link_clicks), 0),
+            )
+            .select_from(CampaignDailyRow)
+            .join(CampaignRow, CampaignRow.id == CampaignDailyRow.campaign_id, isouter=True)
+            .where(*self._period_filter(account_ids, since, until))
+            .group_by(CampaignDailyRow.campaign_id)
+            .order_by(func.sum(CampaignDailyRow.spend).desc())
+        )
+        return [
+            CampaignTotals(
+                campaign_id=row[0],
+                name=row[1],
+                status=row[2],
+                spend=Decimal(row[3]).quantize(Decimal("0.01")),
+                results=int(row[4]),
+                impressions=int(row[5]),
+                link_clicks=int(row[6]),
+            )
+            for row in rows
+        ]
+
+    async def totals_by_account(self, since: date, until: date) -> dict[str, Totals]:
+        """Period totals for every account at once, for the panel list."""
+        rows = await self._session.execute(
+            select(
+                CampaignDailyRow.account_id,
+                func.coalesce(func.sum(CampaignDailyRow.spend), 0),
+                func.coalesce(func.sum(CampaignDailyRow.results), 0),
+                func.coalesce(func.sum(CampaignDailyRow.impressions), 0),
+                func.coalesce(func.sum(CampaignDailyRow.reach), 0),
+                func.coalesce(func.sum(CampaignDailyRow.link_clicks), 0),
+            )
+            .where(CampaignDailyRow.date >= since, CampaignDailyRow.date <= until)
+            .group_by(CampaignDailyRow.account_id)
+        )
+        return {
+            row[0]: Totals(
+                spend=Decimal(row[1]).quantize(Decimal("0.01")),
+                results=int(row[2]),
+                impressions=int(row[3]),
+                reach=int(row[4]),
+                link_clicks=int(row[5]),
+            )
+            for row in rows
+        }
 
     # ── registro das sincronizações ───────────────────────────
 
