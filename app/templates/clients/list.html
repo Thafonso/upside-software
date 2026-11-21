@@ -1,0 +1,57 @@
+{% extends "base.html" %} {% block title %}Clientes{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Clientes</h1>
+    <p class="page-subtitle">
+      Quem a Upside atende hoje. O cliente cadastrado aqui é o que recebe conta de
+      anúncios e relatório mensal.
+    </p>
+  </div>
+  {% if user.is_admin %}
+  <div class="page-actions">
+    <a class="btn btn--primary" href="/clients/new">Cadastrar cliente</a>
+  </div>
+  {% endif %}
+</header>
+
+<form
+  class="toolbar"
+  hx-get="/clients"
+  hx-target="#clients-results"
+  hx-swap="innerHTML"
+  hx-trigger="input changed delay:300ms from:find input, change from:find select"
+  hx-indicator="#clients-results"
+  hx-push-url="true"
+>
+  <div class="field field--grow">
+    <label for="q">Buscar</label>
+    <input
+      class="input"
+      id="q"
+      name="q"
+      type="search"
+      value="{{ q }}"
+      placeholder="Nome, apelido ou contato"
+      autocomplete="off"
+    />
+  </div>
+
+  <div class="field">
+    <label for="status">Situação</label>
+    <select class="select" id="status" name="status">
+      <option value="">Ativos e pausados</option>
+      {% for item in statuses %}
+      <option value="{{ item.value }}" {% if status == item.value %}selected{% endif %}>
+        {{ item.label }}
+      </option>
+      {% endfor %}
+      <option value="all" {% if status == 'all' %}selected{% endif %}>Todos</option>
+    </select>
+  </div>
+</form>
+
+<div id="clients-results" aria-live="polite">
+  {% include "clients/_rows.html" %}
+</div>
+{% endblock %}

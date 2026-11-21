@@ -1,0 +1,90 @@
+/* ============================================================
+   TOKENS.CSS — Identidade visual Upside aplicada ao LeadHunter.
+
+   A paleta, as fontes e os arredondamentos vêm da identidade
+   publicada em upsidemkt.com.br (css/vars.css). Não invente
+   valores novos aqui: se a marca mudar, muda este arquivo.
+
+   O bloco "aplicação" abaixo é o que o site não tem: superfícies
+   de dados, alturas de controle e a escala de espaçamento densa
+   que uma ferramenta de uso diário precisa.
+   ============================================================ */
+
+:root {
+  /* ── Paleta oficial ───────────────────────────────────── */
+  --ink: #16120d;
+  --ink-soft: #241e18;
+  --paper: #ede8e0;
+  --paper-2: #e4ddd1;
+  --paper-3: #f4f1eb;
+  --terracota: #b85f40;
+  --terracota-dark: #9c4e33;
+  --terracota-soft: rgba(184, 95, 64, 0.1);
+  --areia: #d9c2a4;
+  --pedra: #8c8174;
+
+  /* ── Textos ───────────────────────────────────────────── */
+  --text: #2a241d;
+  --text-muted: #5b5247;
+  --on-ink: #ede8e0;
+  --on-ink-muted: #bcb3a6;
+
+  /* ── Linhas e bordas ──────────────────────────────────── */
+  --line: rgba(22, 18, 13, 0.14);
+  --line-soft: rgba(22, 18, 13, 0.08);
+  --line-ink: rgba(237, 232, 224, 0.16);
+  --line-ink-soft: rgba(237, 232, 224, 0.08);
+
+  /* ── Feedback ─────────────────────────────────────────── */
+  --error: #b23b2e;
+  --success: #3f7d52;
+  --error-soft: rgba(178, 59, 46, 0.1);
+  --success-soft: rgba(63, 125, 82, 0.12);
+
+  /* ── Arredondamentos (cantos discretos, nada de pílulas) ─ */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  /* ── Tipografia ───────────────────────────────────────── */
+  --font-heading: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-body: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* ============================================================
+     APLICAÇÃO — específico da ferramenta
+     ============================================================ */
+
+  /* Superfícies de dados */
+  --surface: var(--paper-3);
+  --surface-sunken: var(--paper-2);
+  --row-hover: rgba(184, 95, 64, 0.06);
+  --row-selected: var(--terracota-soft);
+
+  /* Cromo escuro: a barra lateral */
+  --rail-width: 232px;
+  --rail-bg: var(--ink);
+  --topbar-height: 60px;
+
+  /* Escala de espaçamento (densa: passo de 4px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  /* Controles */
+  --control-height: 38px;
+  --control-height-sm: 32px;
+
+  /* Escala de texto da interface */
+  --fs-micro: 0.7rem;
+  --fs-small: 0.78rem;
+  --fs-base: 0.875rem;
+  --fs-lead: 1rem;
+  --fs-title: clamp(1.75rem, 3vw, 2.4rem);
+  --fs-figure: clamp(1.8rem, 2.6vw, 2.5rem);
+
+  --tracking-wide: 0.14em;
+}

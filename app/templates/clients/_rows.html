@@ -1,0 +1,111 @@
+{# Fragmento HTMX: contagem + tabela. Trocado inteiro a cada filtro. #}
+<p class="toolbar-count">
+  {{ clients|length }} cliente{{ '' if clients|length == 1 else 's' }}
+</p>
+
+{% if clients %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Cliente</th>
+        <th scope="col">Contato</th>
+        <th scope="col">Resultado contado</th>
+        <th scope="col" class="num">Mensalidade</th>
+        <th scope="col" class="shrink">Situação</th>
+        {% if can_edit %}
+        <th scope="col" class="shrink"><span class="sr-only">Ações</span></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for client in clients %}
+      <tr>
+        <td>
+          <div class="entity">
+            <span class="entity-avatar" aria-hidden="true">{{ client.initials }}</span>
+            <span>
+              <span class="entity-name">{{ client.name }}</span>
+              <span class="entity-meta">{{ client.slug }}</span>
+            </span>
+          </div>
+        </td>
+        <td>
+          {% if client.contact_name or client.contact_phone or client.contact_email %}
+          {% if client.contact_name %}{{ client.contact_name }}<br />{% endif %}
+          <span class="entity-meta">
+            {% if client.contact_phone %}
+            <a href="https://wa.me/{{ client.contact_phone }}" target="_blank" rel="noopener">
+              {{ client.contact_phone|phone_br }}
+            </a>
+            {% endif %}
+            {% if client.contact_email %}
+            <a href="mailto:{{ client.contact_email }}">{{ client.contact_email }}</a>
+            {% endif %}
+          </span>
+          {% else %}
+          <span class="muted">Sem contato</span>
+          {% endif %}
+        </td>
+        <td>{{ client.result_label }}</td>
+        <td class="num">
+          {% if client.monthly_fee is none %}
+          <span class="muted">—</span>
+          {% else %}{{ client.monthly_fee|brl }}{% endif %}
+        </td>
+        <td class="shrink">
+          {% if can_edit %}
+          <form>
+            <input type="hidden" name="q" value="{{ q }}" />
+            <input type="hidden" name="filter_status" value="{{ status }}" />
+            <label class="sr-only" for="status-{{ client.id }}">
+              Situação de {{ client.name }}
+            </label>
+            <select
+              class="select select--sm"
+              id="status-{{ client.id }}"
+              name="status"
+              hx-post="/clients/{{ client.id }}/status"
+              hx-include="closest form"
+              hx-target="#clients-results"
+              hx-swap="innerHTML"
+            >
+              {% for item in statuses %}
+              <option value="{{ item.value }}" {% if item == client.status %}selected{% endif %}>
+                {{ item.label }}
+              </option>
+              {% endfor %}
+            </select>
+          </form>
+          {% else %}
+          <span class="badge badge--{{ client.status.value }}">{{ client.status_label }}</span>
+          {% endif %}
+        </td>
+        {% if can_edit %}
+        <td class="shrink">
+          <a class="btn btn--quiet btn--sm" href="/clients/{{ client.id }}/edit">Editar</a>
+        </td>
+        {% endif %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    {% if q or status %}
+    <p class="empty-title">Nenhum cliente nesse filtro</p>
+    <p>Limpe a busca ou escolha outra situação para ver a lista completa.</p>
+    {% else %}
+    <p class="empty-title">Comece cadastrando um cliente</p>
+    <p>
+      Cada cliente aqui vira uma conta de anúncios no painel e um relatório mensal.
+    </p>
+    {% if can_edit %}
+    <a class="btn btn--primary" href="/clients/new">Cadastrar cliente</a>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+{% endif %}

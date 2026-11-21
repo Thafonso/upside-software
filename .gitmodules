@@ -1,0 +1,3 @@
+[submodule "vendor/mazyos-scraper"]
+	path = vendor/mazyos-scraper
+	url = https://github.com/vagnermazzeo/mazyos-scraper

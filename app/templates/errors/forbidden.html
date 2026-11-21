@@ -1,0 +1,14 @@
+{% extends "base.html" %} {% block title %}Acesso restrito{% endblock %} {% block
+content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Acesso restrito</h1>
+    <p class="page-subtitle">
+      {{ message }} Peça a um administrador para fazer esta alteração.
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--primary" href="/clients">Ir para clientes</a>
+  </div>
+</header>
+{% endblock %}

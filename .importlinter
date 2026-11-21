@@ -1,0 +1,29 @@
+[importlinter]
+root_package = app
+include_external_packages = True
+
+# Each new feature module (hunter, ads, reports) must be added to the
+# contracts below as soon as its package is created.
+
+[importlinter:contract:feature-modules-are-independent]
+name = Feature modules never import each other
+type = independence
+modules =
+    app.clients
+
+[importlinter:contract:shared-is-standalone]
+name = app.shared never imports a feature module
+type = forbidden
+source_modules =
+    app.shared
+forbidden_modules =
+    app.clients
+
+[importlinter:contract:feature-modules-ignore-entrypoints]
+name = Feature modules never import the process entrypoints
+type = forbidden
+source_modules =
+    app.clients
+forbidden_modules =
+    app.main
+    app.worker

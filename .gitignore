@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+node_modules/
+
+# Environment
+.env
+.env.local
+
+# Local artifacts
+*.log
+/data/
+/reports-out/

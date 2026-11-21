@@ -1,0 +1,78 @@
+{#
+  Layout do app: barra lateral ink fixa + área de trabalho em paper.
+  Cada etapa do projeto acrescenta um item em `nav_items`.
+#}
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}{{ app_name }}{% endblock %} — {{ brand_name }}</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23EDE8E0'/%3E%3Ctext x='16' y='24' font-family='Georgia,serif' font-size='22' text-anchor='middle' fill='%2316120D'%3EU%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/css/tokens.css" />
+    <link rel="stylesheet" href="/static/css/app.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js"
+      defer
+    ></script>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <div class="shell">
+      <nav class="rail" aria-label="Navegação principal">
+        <a class="rail-brand" href="/clients">
+          <span class="mark" aria-hidden="true">U</span>
+          <span class="rail-brand-word">
+            <span class="rail-brand-name">{{ brand_name|upper }}</span>
+            <span class="rail-brand-product">{{ app_name }}</span>
+          </span>
+        </a>
+
+        {% set nav_items = [{"key": "clients", "label": "Clientes", "href": "/clients"}] %}
+        <ul class="rail-nav">
+          {% for item in nav_items %}
+          <li>
+            {% if active_nav == item.key %}
+            <a class="rail-link" href="{{ item.href }}" aria-current="page">{{ item.label }}</a>
+            {% else %}
+            <a class="rail-link" href="{{ item.href }}">{{ item.label }}</a>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+
+        <div class="rail-foot">
+          {% if user %}
+          <div class="who">
+            <span class="who-avatar" aria-hidden="true">{{ user.initials }}</span>
+            <span class="who-name">
+              <strong>{{ user.name }}</strong>
+              <span class="who-role">{{ user.role.label }}</span>
+            </span>
+          </div>
+          <form method="post" action="/logout">
+            <button class="btn btn--on-ink btn--sm btn--block" type="submit">
+              Sair
+            </button>
+          </form>
+          {% else %}
+          <a class="btn btn--on-ink btn--sm btn--block" href="/login">Entrar</a>
+          {% endif %}
+        </div>
+      </nav>
+
+      <div class="main">
+        <main class="page">{% block content %}{% endblock %}</main>
+      </div>
+    </div>
+  </body>
+</html>

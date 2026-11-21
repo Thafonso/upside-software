@@ -1,0 +1,165 @@
+{% extends "base.html" %} {% block title %}{{ 'Novo cliente' if mode == 'new'
+else client.name }}{% endblock %} {% block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">
+      {{ 'Cadastrar cliente' if mode == 'new' else client.name }}
+    </h1>
+    <p class="page-subtitle">
+      {% if mode == 'new' %} O nome é o único campo obrigatório. O resto pode ser
+      preenchido depois, quando a conta de anúncios for vinculada. {% else %} Criado
+      em {{ client.created_at|date_br }} · apelido {{ client.slug }} {% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--quiet" href="/clients">Voltar para a lista</a>
+  </div>
+</header>
+
+{% if created %}
+<p class="alert alert--ok" role="status">Cliente cadastrado.</p>
+{% endif %} {% if errors %}
+<p class="alert alert--error" role="alert">
+  Confira os campos marcados abaixo.
+</p>
+{% endif %}
+
+<form
+  class="form-card"
+  method="post"
+  action="{{ '/clients' if mode == 'new' else '/clients/' ~ client.id }}"
+>
+  <section class="form-section">
+    <h2 class="form-section-title">Identificação</h2>
+    <div class="form-grid">
+      <div class="field span-all">
+        <label for="name">Nome do cliente</label>
+        <input
+          class="input"
+          id="name"
+          name="name"
+          type="text"
+          value="{{ values.name|default('', true) }}"
+          maxlength="160"
+          required
+          autofocus
+          {% if errors.name %}aria-invalid="true" aria-describedby="err-name"{% endif %}
+        />
+        {% if errors.name %}
+        <p class="field-error" id="err-name">{{ errors.name }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="status">Situação</label>
+        <select class="select" id="status" name="status">
+          {% for item in statuses %}
+          <option value="{{ item.value }}" {% if values.status == item.value %}selected{% endif %}>
+            {{ item.label }}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="field-hint">
+          Pausado continua no painel; arquivado sai das listas do dia a dia.
+        </p>
+      </div>
+
+      <div class="field">
+        <label for="result_action_type">Resultado contado</label>
+        <select class="select" id="result_action_type" name="result_action_type">
+          {% for value, label in result_types.items() %}
+          <option value="{{ value }}" {% if values.result_action_type == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="field-hint">
+          A conversão da Meta que vale como resultado deste cliente no painel e no
+          relatório.
+        </p>
+        {% if errors.result_action_type %}
+        <p class="field-error">{{ errors.result_action_type }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field">
+        <label for="monthly_fee">Mensalidade</label>
+        <input
+          class="input"
+          id="monthly_fee"
+          name="monthly_fee"
+          type="text"
+          inputmode="decimal"
+          value="{{ values.monthly_fee|default('', true) }}"
+          placeholder="2.500,00"
+          {% if errors.monthly_fee %}aria-invalid="true"{% endif %}
+        />
+        <p class="field-hint">Em reais. Deixe em branco se não se aplica.</p>
+        {% if errors.monthly_fee %}
+        <p class="field-error">{{ errors.monthly_fee }}</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="form-section">
+    <h2 class="form-section-title">Contato</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="contact_name">Pessoa de contato</label>
+        <input
+          class="input"
+          id="contact_name"
+          name="contact_name"
+          type="text"
+          value="{{ values.contact_name|default('', true) }}"
+          maxlength="120"
+        />
+      </div>
+
+      <div class="field">
+        <label for="contact_phone">Telefone</label>
+        <input
+          class="input"
+          id="contact_phone"
+          name="contact_phone"
+          type="tel"
+          value="{{ values.contact_phone|default('', true) }}"
+          placeholder="(41) 99988-7766"
+        />
+        <p class="field-hint">Vira link de WhatsApp na lista.</p>
+      </div>
+
+      <div class="field">
+        <label for="contact_email">E-mail</label>
+        <input
+          class="input"
+          id="contact_email"
+          name="contact_email"
+          type="email"
+          value="{{ values.contact_email|default('', true) }}"
+          maxlength="255"
+          {% if errors.contact_email %}aria-invalid="true" aria-describedby="err-email"{% endif %}
+        />
+        {% if errors.contact_email %}
+        <p class="field-error" id="err-email">{{ errors.contact_email }}</p>
+        {% endif %}
+      </div>
+
+      <div class="field span-all">
+        <label for="notes">Observações</label>
+        <textarea class="textarea" id="notes" name="notes" maxlength="2000">
+{{ values.notes|default('', true) }}</textarea
+        >
+      </div>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <button class="btn btn--primary" type="submit">
+      {{ 'Cadastrar cliente' if mode == 'new' else 'Salvar alterações' }}
+    </button>
+    <a class="btn btn--quiet" href="/clients">Cancelar</a>
+  </div>
+</form>
+{% endblock %}
