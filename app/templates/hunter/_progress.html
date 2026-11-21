@@ -38,7 +38,18 @@
 
   {% else %}
   {% set plural = '' if search.total_found == 1 else 's' %}
-  <p class="toolbar-count">{{ search.total_found|num }} empresa{{ plural }} encontrada{{ plural }}</p>
+  <div class="list-bar">
+    <p class="toolbar-count">
+      {{ search.total_found|num }} empresa{{ plural }} encontrada{{ plural }}
+    </p>
+    {% if search.total_found %}
+    <div class="list-bar-actions">
+      <a class="btn btn--primary btn--sm" href="/hunter?search_id={{ search.id }}">
+        Trabalhar esta lista
+      </a>
+    </div>
+    {% endif %}
+  </div>
 
   {% if prospects %}
   <div class="table-wrap">

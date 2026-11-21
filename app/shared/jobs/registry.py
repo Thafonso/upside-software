@@ -97,6 +97,16 @@ def clear_handlers() -> None:
     _handlers.clear()
 
 
+def snapshot_handlers() -> dict[str, JobHandler]:
+    """Copy the current registrations, so a test can put them back."""
+    return dict(_handlers)
+
+
+def restore_handlers(snapshot: dict[str, JobHandler]) -> None:
+    _handlers.clear()
+    _handlers.update(snapshot)
+
+
 def load_handler_modules(module_names: tuple[str, ...]) -> None:
     """Import the modules that register handlers, so the worker knows them."""
     for name in module_names:

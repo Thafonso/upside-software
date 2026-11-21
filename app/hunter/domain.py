@@ -8,6 +8,15 @@ from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
+from app.hunter.scoring import (
+    Score,
+    Signals,
+    WebsiteType,
+    classify_website,
+    compute_score,
+    extract_whatsapp,
+)
+
 MAX_NICHES = 5
 MAX_TEXT = 80
 # How long after the scraper's own budget we stop waiting on a search.
@@ -179,6 +188,16 @@ class Prospect:
     client_id: UUID | None
     created_at: datetime
     updated_at: datetime
+    # Signals, written together with the row.
+    whatsapp: str | None = None
+    website_type: WebsiteType = WebsiteType.NONE
+    has_meta_pixel: bool | None = None
+    has_instagram: bool | None = None
+    has_whatsapp_link: bool | None = None
+    site_unreachable: bool = False
+    site_checked_at: datetime | None = None
+    score: int = 0
+    score_details: dict[str, int] = field(default_factory=dict)
 
     @property
     def status_label(self) -> str:
@@ -187,6 +206,154 @@ class Prospect:
     @property
     def first_email(self) -> str | None:
         return self.emails[0] if self.emails else None
+
+    @property
+    def whatsapp_link(self) -> str | None:
+        return f"https://wa.me/{self.whatsapp}" if self.whatsapp else None
+
+    @property
+    def website_label(self) -> str:
+        return self.website_type.label
+
+    @property
+    def score_reasons(self) -> list[tuple[str, int]]:
+        return Score(value=self.score, details=self.score_details).reasons
+
+    @property
+    def score_explanation(self) -> str:
+        """One line for the tooltip on the score."""
+        reasons = self.score_reasons
+        if not reasons:
+            return "Nenhum sinal encontrado."
+        return " · ".join(f"{label} +{points}" for label, points in reasons)
+
+    @property
+    def needs_site_check(self) -> bool:
+        """Own site, never reached yet: worth visiting."""
+        return (
+            self.website_type == WebsiteType.SITE
+            and self.site_checked_at is None
+            and not self.site_unreachable
+        )
+
+
+def signals_for(
+    *,
+    phone: str | None,
+    website: str | None,
+    emails: tuple[str, ...],
+    review_count: int,
+    review_rating: Decimal | None,
+    has_meta_pixel: bool | None = None,
+) -> Signals:
+    """Read every signal off a prospect's raw data."""
+    return Signals(
+        review_count=review_count,
+        review_rating=review_rating,
+        website_type=classify_website(website),
+        whatsapp=extract_whatsapp(phone),
+        emails=emails,
+        has_meta_pixel=has_meta_pixel,
+    )
+
+
+def score_for(signals: Signals) -> Score:
+    return compute_score(signals)
+
+
+@dataclass(frozen=True, slots=True)
+class SiteCheck:
+    """What visiting a prospect's own site told us."""
+
+    reachable: bool
+    has_meta_pixel: bool | None = None
+    has_instagram: bool | None = None
+    has_whatsapp_link: bool | None = None
+
+    @classmethod
+    def unreachable(cls) -> SiteCheck:
+        """A site we could not open: not a failure, just unknown."""
+        return cls(reachable=False)
+
+
+@dataclass(frozen=True, slots=True)
+class ProspectFilters:
+    """What the list screen is showing right now."""
+
+    search_id: UUID | None = None
+    status: ProspectStatus | None = None
+    no_website: bool = False
+    social_only: bool = False
+    has_whatsapp: bool = False
+    has_email: bool = False
+    min_score: int = 0
+
+    @property
+    def is_filtered(self) -> bool:
+        return any(
+            (
+                self.search_id,
+                self.status,
+                self.no_website,
+                self.social_only,
+                self.has_whatsapp,
+                self.has_email,
+                self.min_score,
+            )
+        )
+
+    def as_query(self) -> dict[str, str]:
+        """The filters as form fields, to carry them through an HTMX post."""
+        return {
+            "search_id": str(self.search_id) if self.search_id else "",
+            "status": self.status.value if self.status else "",
+            "no_website": "1" if self.no_website else "",
+            "social_only": "1" if self.social_only else "",
+            "has_whatsapp": "1" if self.has_whatsapp else "",
+            "has_email": "1" if self.has_email else "",
+            "min_score": str(self.min_score) if self.min_score else "",
+        }
+
+
+def build_prospect_filters(
+    *,
+    search_id: str = "",
+    status: str = "",
+    no_website: str = "",
+    social_only: str = "",
+    has_whatsapp: str = "",
+    has_email: str = "",
+    min_score: str = "",
+) -> ProspectFilters:
+    """Read the filter bar. Anything unreadable simply does not filter."""
+    parsed_search: UUID | None = None
+    if search_id:
+        try:
+            parsed_search = UUID(search_id)
+        except ValueError:
+            parsed_search = None
+
+    parsed_status: ProspectStatus | None = None
+    if status:
+        try:
+            parsed_status = ProspectStatus(status)
+        except ValueError:
+            parsed_status = None
+
+    try:
+        parsed_score = max(0, min(int(min_score or 0), 100))
+    except ValueError:
+        parsed_score = 0
+
+    return ProspectFilters(
+        search_id=parsed_search,
+        status=parsed_status,
+        no_website=bool(no_website),
+        social_only=bool(social_only),
+        has_whatsapp=bool(has_whatsapp),
+        has_email=bool(has_email),
+        min_score=parsed_score,
+    )
 
 
 @dataclass(frozen=True, slots=True)
