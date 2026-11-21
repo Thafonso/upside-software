@@ -1,0 +1,114 @@
+{#
+  Bloco que a tela da busca troca sozinha enquanto a busca está aberta.
+  Quando termina, o bloco volta sem o hx-trigger e o polling para.
+#}
+<div
+  id="search-progress"
+  {% if search.is_open %}
+  hx-get="/hunter/searches/{{ search.id }}/progress"
+  hx-trigger="every 5s"
+  hx-swap="outerHTML"
+  {% endif %}
+>
+  {% if search.status.value == 'queued' %}
+  <div class="state state--waiting">
+    <p class="state-title">Na fila</p>
+    <p>
+      A busca começa assim que o scraper ficar livre. Uma de cada vez, para o
+      Google não bloquear.
+    </p>
+  </div>
+
+  {% elif search.status.value == 'running' %}
+  <div class="state state--waiting">
+    <p class="state-title"><span class="pulse" aria-hidden="true"></span> Buscando no Google</p>
+    <p>
+      Começou em {{ search.started_at|datetime_br }} e costuma levar até
+      {{ (search.max_time_seconds // 60)|num }} minutos. Pode fechar esta tela: o
+      resultado fica guardado.
+    </p>
+  </div>
+
+  {% elif search.status.value == 'failed' %}
+  <div class="state state--failed">
+    <p class="state-title">A busca não terminou</p>
+    <p>{{ search.error_message or 'Algo deu errado no caminho.' }}</p>
+    <a class="btn btn--primary" href="/hunter/searches/new">Tentar outra busca</a>
+  </div>
+
+  {% else %}
+  {% set plural = '' if search.total_found == 1 else 's' %}
+  <p class="toolbar-count">{{ search.total_found|num }} empresa{{ plural }} encontrada{{ plural }}</p>
+
+  {% if prospects %}
+  <div class="table-wrap">
+    <table class="data">
+      <thead>
+        <tr>
+          <th scope="col">Empresa</th>
+          <th scope="col">Categoria</th>
+          <th scope="col" class="num">Avaliações</th>
+          <th scope="col">Telefone</th>
+          <th scope="col">Site</th>
+          <th scope="col">Bairro</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prospect in prospects %}
+        <tr>
+          <td>
+            <a
+              class="entity-name"
+              href="{{ prospect.maps_link }}"
+              target="_blank"
+              rel="noopener"
+              title="Abrir no Google Maps"
+              >{{ prospect.name }}</a
+            >
+            {% if prospect.first_email %}
+            <span class="entity-meta">{{ prospect.first_email }}</span>
+            {% endif %}
+          </td>
+          <td class="clip" title="{{ prospect.category or '' }}">
+            {{ prospect.category or '—' }}
+          </td>
+          <td class="num">
+            {% if prospect.review_count %}
+            {{ prospect.review_count|num }}
+            {% if prospect.review_rating %}
+            <span class="entity-meta">{{ prospect.review_rating|num(1) }}</span>
+            {% endif %}
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+          <td class="nowrap">{{ prospect.phone or '—' }}</td>
+          <td>
+            {% if prospect.website %}
+            <a
+              href="{{ prospect.website }}"
+              target="_blank"
+              rel="noopener nofollow"
+              title="{{ prospect.website }}"
+              >{{ prospect.website|site_br }}</a
+            >
+            {% else %}
+            <span class="muted">sem site</span>
+            {% endif %}
+          </td>
+          <td>{{ prospect.borough or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <div class="empty">
+      <p class="empty-title">O Google não devolveu empresas</p>
+      <p>
+        Tente um nicho mais comum, ou tire o bairro para cobrir a cidade inteira.
+      </p>
+      <a class="btn btn--primary" href="/hunter/searches/new">Nova busca</a>
+    </div>
+  </div>
+  {% endif %} {% endif %}
+</div>

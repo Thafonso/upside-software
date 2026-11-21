@@ -1,0 +1,17 @@
+{% extends "base.html" %} {% block title %}{{ search.niches|join(' + ') }}{%
+endblock %} {% block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">{{ search.niches|join(' + ') }}</h1>
+    <p class="page-subtitle">
+      Até {{ search.quantity }} empresas em {{ search.where }}{% if
+      search.fetch_emails %}, procurando e-mails nos sites{% endif %}.
+    </p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn--quiet" href="/hunter">Todas as buscas</a>
+  </div>
+</header>
+
+{% include "hunter/_progress.html" %}
+{% endblock %}

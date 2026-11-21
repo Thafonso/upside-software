@@ -1,0 +1,76 @@
+{% extends "base.html" %} {% block title %}Hunter{% endblock %} {% block content
+%}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Hunter</h1>
+    <p class="page-subtitle">
+      Procure empresas de um nicho num bairro ou cidade. O Google é consultado em
+      segundo plano; você pode sair da tela e voltar depois.
+    </p>
+  </div>
+  <div class="page-actions">
+    <span class="quota">
+      {{ used_today }} de {{ daily_limit }} buscas hoje
+    </span>
+    {% if used_today < daily_limit %}
+    <a class="btn btn--primary" href="/hunter/searches/new">Nova busca</a>
+    {% endif %}
+  </div>
+</header>
+
+{% if searches %}
+<div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr>
+        <th scope="col">Busca</th>
+        <th scope="col" class="shrink">Situação</th>
+        <th scope="col" class="num">Encontradas</th>
+        <th scope="col">Quando</th>
+        <th scope="col" class="shrink"><span class="sr-only">Ações</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for search in searches %}
+      <tr>
+        <td>
+          <a class="entity-name" href="/hunter/searches/{{ search.id }}">
+            {{ search.niches|join(' + ') }}
+          </a>
+          <span class="entity-meta">{{ search.where }}</span>
+        </td>
+        <td class="shrink">
+          <span class="badge badge--search-{{ search.status.value }}">
+            {{ search.status_label }}
+          </span>
+        </td>
+        <td class="num">
+          {% if search.status.value == 'done' %}{{ search.total_found|num }}{% else %}
+          <span class="muted">—</span>{% endif %}
+        </td>
+        <td>{{ search.created_at|datetime_br }}</td>
+        <td class="shrink">
+          <a class="btn btn--quiet btn--sm" href="/hunter/searches/{{ search.id }}">
+            Abrir
+          </a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-wrap">
+  <div class="empty">
+    <p class="empty-title">Nenhuma busca ainda</p>
+    <p>
+      Comece por um nicho e um bairro — por exemplo, dentista no Batel. As empresas
+      encontradas ficam guardadas para você trabalhar depois.
+    </p>
+    {% if used_today < daily_limit %}
+    <a class="btn btn--primary" href="/hunter/searches/new">Nova busca</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

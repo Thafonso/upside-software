@@ -77,6 +77,17 @@ def format_phone_br(digits: str | None) -> str:
     return digits
 
 
+def format_site(url: str | None, limit: int = 28) -> str:
+    """https://www.padaria.com.br/contato -> padaria.com.br/contato."""
+    if not url:
+        return "—"
+    shown = url.strip()
+    for prefix in ("https://", "http://"):
+        shown = shown.removeprefix(prefix)
+    shown = shown.removeprefix("www.").rstrip("/")
+    return shown if len(shown) <= limit else f"{shown[: limit - 1]}…"
+
+
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 templates.env.filters["brl"] = format_brl
 templates.env.filters["num"] = format_number
@@ -84,6 +95,7 @@ templates.env.filters["date_br"] = format_date_br
 templates.env.filters["datetime_br"] = format_datetime_br
 templates.env.filters["pct_br"] = format_percent_br
 templates.env.filters["phone_br"] = format_phone_br
+templates.env.filters["site_br"] = format_site
 templates.env.globals["app_name"] = "LeadHunter"
 templates.env.globals["brand_name"] = "Upside"
 

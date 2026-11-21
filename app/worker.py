@@ -23,9 +23,8 @@ logger = logging.getLogger("app.worker")
 
 DB_RETRY_SECONDS = 3.0
 
-# Modules that register queue handlers. Each step of the implementation
-# order adds its own (step 3: "app.hunter.jobs", step 5: "app.ads.jobs").
-HANDLER_MODULES: tuple[str, ...] = ()
+# Packages whose import registers queue handlers. Step 5 adds "app.ads".
+HANDLER_MODULES: tuple[str, ...] = ("app.hunter",)
 
 
 async def wait_for_database(*, attempts: int = 20) -> None:

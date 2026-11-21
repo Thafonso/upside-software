@@ -12,6 +12,7 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.clients import router as clients_router
+from app.hunter import router as hunter_router
 from app.shared.auth import NotAuthenticated, NotAuthorized
 from app.shared.config import get_settings
 from app.shared.db import dispose_engine
@@ -45,6 +46,7 @@ app = FastAPI(
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(shared_router)
 app.include_router(clients_router)
+app.include_router(hunter_router)
 app.include_router(jobs_router)
 
 
