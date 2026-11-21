@@ -38,6 +38,8 @@
         </a>
 
         {% set nav_items = [{"key": "clients", "label": "Clientes", "href": "/clients"}] %}
+        {% if user and user.is_admin %} {% set nav_items = nav_items + [{"key":
+        "jobs", "label": "Jobs", "href": "/admin/jobs"}] %} {% endif %}
         <ul class="rail-nav">
           {% for item in nav_items %}
           <li>

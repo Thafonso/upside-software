@@ -1,0 +1,57 @@
+{% extends "base.html" %} {% block title %}Jobs{% endblock %} {% block content %}
+<header class="page-head">
+  <div>
+    <h1 class="page-title">Fila de jobs</h1>
+    <p class="page-subtitle">
+      O trabalho demorado do sistema — busca no scraper, sincronização de
+      anúncios, geração de relatório — passa por aqui. Um job que falha tenta de
+      novo sozinho, com intervalo crescente.
+    </p>
+  </div>
+</header>
+
+<form
+  class="toolbar"
+  hx-get="/admin/jobs"
+  hx-target="#jobs-results"
+  hx-swap="innerHTML"
+  hx-trigger="change from:find select, input changed delay:300ms from:find input"
+  hx-indicator="#jobs-results"
+  hx-push-url="true"
+>
+  <div class="field">
+    <label for="status">Situação</label>
+    <select class="select" id="status" name="status">
+      <option value="">Todas</option>
+      {% for item in statuses %}
+      <option value="{{ item.value }}" {% if status == item.value %}selected{% endif %}>
+        {{ item.label }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="field field--grow">
+    <label for="job_type">Tipo</label>
+    <input
+      class="input"
+      id="job_type"
+      name="job_type"
+      type="search"
+      value="{{ job_type }}"
+      placeholder="hunter.poll_scrape"
+      list="known-job-types"
+      autocomplete="off"
+    />
+    <datalist id="known-job-types">
+      {% for name in known_types %}
+      <option value="{{ name }}"></option>
+      {% endfor %}
+    </datalist>
+  </div>
+</form>
+
+<div id="jobs-results" aria-live="polite">
+  {% include "jobs/_rows.html" %}
+</div>
+{% endblock %}
