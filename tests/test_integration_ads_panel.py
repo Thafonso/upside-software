@@ -307,3 +307,75 @@ async def test_the_panel_needs_a_session(clean_tables: AsyncSession) -> None:
         response = await anonymous.get("/ads")
     assert response.status_code == 303
     assert response.headers["location"] == "/login?next=/ads"
+
+
+# ── Sparklines, variação e o controle de período ──────────────
+
+
+async def test_the_panel_row_carries_its_own_daily_series(
+    clean_tables: AsyncSession,
+) -> None:
+    """The sparkline needs a shape, and one query has to produce them all."""
+    await _seed(clean_tables)
+
+    rows = {row.client_name: row for row in await _service(clean_tables).panel_rows(_this_month())}
+    padaria = rows["Padaria Central"]
+
+    assert padaria.has_shape is True
+    assert len(padaria.series) == 2
+    assert padaria.series[0].day < padaria.series[1].day
+    # Today holds both campaigns of that account: 100 + 40.
+    assert padaria.series[-1].spend == Decimal("140.00")
+
+
+async def test_two_accounts_of_one_client_become_one_line(
+    clean_tables: AsyncSession,
+) -> None:
+    padaria = await _make_client(clean_tables, "Padaria Central")
+    await clean_tables.commit()
+    service = _service(clean_tables)
+    await service.link_account(ACCOUNT, client_id=padaria.id)
+    await service.link_account(OTHER_ACCOUNT, client_id=padaria.id)
+
+    today = today_local()
+    await service.sync_day(
+        ACCOUNT, FakeGateway(insights=[_insight(today, spend="100.00")]), day=today
+    )
+    await service.sync_day(
+        OTHER_ACCOUNT,
+        FakeGateway(insights=[_insight(today, "9001", spend="50.00")]),
+        day=today,
+    )
+    await clean_tables.commit()
+
+    rows = await service.panel_rows(_this_month())
+    assert len(rows[0].series) == 1
+    assert rows[0].series[0].spend == Decimal("150.00")
+
+
+async def test_a_client_screen_compares_with_the_period_before(
+    http: httpx.AsyncClient, clean_tables: AsyncSession
+) -> None:
+    padaria, _ = await _seed(clean_tables)
+
+    response = await http.get(f"/ads/clients/{padaria}")
+
+    assert response.status_code == 200
+    # The cards count up, so the value is also an attribute.
+    assert 'data-count="220.00"' in response.text
+    # Nothing came before this month in the fixture, so the cards say so
+    # instead of inventing a percentage.
+    assert "sem base de comparação" in response.text
+    assert 'class="spark' in response.text
+
+
+async def test_the_period_control_is_a_set_of_radios(
+    http: httpx.AsyncClient, clean_tables: AsyncSession
+) -> None:
+    await _seed(clean_tables)
+
+    response = await http.get("/ads", params={"preset": PeriodPreset.LAST_7.value})
+
+    assert 'type="radio"' in response.text
+    assert 'name="preset"' in response.text
+    assert f'value="{PeriodPreset.LAST_7.value}"' in response.text

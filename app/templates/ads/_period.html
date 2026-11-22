@@ -3,19 +3,29 @@
   então a tela filtrada pode ser salva nos favoritos ou mandada por mensagem.
 #}
 <form class="toolbar period-bar" method="get" action="{{ action }}">
-  <div class="field">
-    <label for="preset">Período</label>
-    <select class="select" id="preset" name="preset" onchange="this.form.submit()">
-      {% for item in presets %}
-      <option value="{{ item.value }}" {% if period.preset == item %}selected{% endif %}>
-        {{ item.label }}
-      </option>
-      {% endfor %}
-      {% if period.preset is none %}
-      <option value="" selected>{{ period.label }}</option>
-      {% endif %}
-    </select>
-  </div>
+  {#
+    Segmented control. Radios under the hood, so the keyboard moves through
+    it with the arrow keys for free and the form still posts one value.
+    The sliding indicator is a sibling element moved with a transform;
+    animating `left` would lay the page out again on every step.
+  #}
+  <fieldset class="segmented" data-segmented>
+    <legend class="sr-only">Período</legend>
+    {% set chosen = period.preset %}
+    {% for item in presets %}
+    <label class="segment">
+      <input
+        type="radio"
+        name="preset"
+        value="{{ item.value }}"
+        {% if chosen == item %}checked{% endif %}
+        onchange="this.form.requestSubmit()"
+      />
+      <span>{{ item.label }}</span>
+    </label>
+    {% endfor %}
+    <span class="segment-marker" aria-hidden="true"></span>
+  </fieldset>
 
   <div class="field">
     <label for="since">De</label>

@@ -20,6 +20,24 @@
     />
     <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/app.css" />
+    <link rel="stylesheet" href="/static/css/motion.css" />
+    {#
+      Applies the saved theme before the first paint. It has to be inline
+      and here, above the body: a deferred file would run after the page is
+      already on screen and the user would see the wrong ground flash.
+      Ink is the default, and :root already carries it, so a failure here
+      is invisible rather than broken.
+    #}
+    <script>
+      try {
+        var saved = localStorage.getItem("upside.theme");
+        if (saved === "paper" || saved === "ink") {
+          document.documentElement.dataset.theme = saved;
+        }
+      } catch (e) {
+        /* no storage: stay on the default */
+      }
+    </script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/htmx/2.0.4/htmx.min.js"
       defer
@@ -56,6 +74,14 @@
         </ul>
 
         <div class="rail-foot">
+          <div class="theme-toggle" role="group" aria-label="Tema da interface">
+            <button type="button" data-set-theme="ink" aria-pressed="false">
+              Ink
+            </button>
+            <button type="button" data-set-theme="paper" aria-pressed="false">
+              Paper
+            </button>
+          </div>
           {% if user %}
           <div class="who">
             <span class="who-avatar" aria-hidden="true">{{ user.initials }}</span>
@@ -76,9 +102,77 @@
       </nav>
 
       <div class="main">
+        <div class="progress" id="progress" data-active="false" aria-hidden="true"></div>
         <main class="page">{% block content %}{% endblock %}</main>
       </div>
     </div>
+
+    {# Toasts land here. Live region, so a result is announced without
+       stealing focus from whatever is being typed. #}
+    <div class="toast-region" id="toast-region" aria-live="polite" aria-atomic="false"></div>
+
+    {# Command palette. The client list is fetched on first open. #}
+    <div
+      class="palette"
+      id="palette"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-label="Paleta de comandos"
+      data-clients-url="/clients/options.json"
+      data-admin="{{ 'true' if user and user.is_admin else 'false' }}"
+    >
+      <div class="palette-box">
+        <input
+          class="palette-input"
+          type="text"
+          role="combobox"
+          aria-expanded="true"
+          aria-controls="palette-list"
+          aria-autocomplete="list"
+          placeholder="Buscar tela, cliente ou ação…"
+          autocomplete="off"
+        />
+        <ul class="palette-list" id="palette-list" role="listbox" aria-label="Resultados"></ul>
+        <p class="palette-foot">
+          <span><kbd>↑</kbd><kbd>↓</kbd> navegar</span>
+          <span><kbd>↵</kbd> abrir</span>
+          <span><kbd>Esc</kbd> fechar</span>
+        </p>
+      </div>
+    </div>
+
+    {# Shortcut cheat sheet, opened with "?". #}
+    <div class="palette" id="shortcuts" hidden role="dialog" aria-modal="true"
+         aria-label="Atalhos de teclado">
+      <div class="palette-box">
+        <ul class="shortcuts-list">
+          <li><span>Paleta de comandos</span> <span><kbd>Ctrl</kbd><kbd>K</kbd></span></li>
+          <li><span>Hunter</span> <span><kbd>G</kbd> <kbd>H</kbd></span></li>
+          <li><span>Anúncios</span> <span><kbd>G</kbd> <kbd>A</kbd></span></li>
+          <li><span>Relatórios</span> <span><kbd>G</kbd> <kbd>R</kbd></span></li>
+          <li><span>Clientes</span> <span><kbd>G</kbd> <kbd>C</kbd></span></li>
+          <li><span>Nova busca</span> <span><kbd>N</kbd></span></li>
+          <li><span>Esta lista</span> <span><kbd>?</kbd></span></li>
+        </ul>
+        <p class="palette-foot">
+          <button class="btn btn--quiet btn--sm" type="button" data-close-shortcuts>
+            Fechar
+          </button>
+        </p>
+      </div>
+    </div>
+
+    <script src="/static/js/theme.js" defer></script>
+    <script src="/static/js/motion.js" defer></script>
+    <script src="/static/js/toast.js" defer></script>
+    <script src="/static/js/shortcuts.js" defer></script>
+    <script src="/static/js/command-palette.js" defer></script>
+    <script src="/static/js/popovers.js" defer></script>
+    <script src="/static/js/search-radar.js" defer></script>
+    <script src="/static/js/prospects.js" defer></script>
+    <script src="/static/js/segmented.js" defer></script>
+    <script src="/static/js/jobs.js" defer></script>
     <script src="/static/js/app.js" defer></script>
     {% block scripts %}{% endblock %}
   </body>

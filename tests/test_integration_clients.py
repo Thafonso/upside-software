@@ -362,3 +362,32 @@ async def test_service_layer_create_persists(clean_tables: AsyncSession) -> None
     reloaded = await ClientsApi(clean_tables).get_client(created.id)
     assert reloaded is not None
     assert reloaded.slug == "padaria-sao-jose"
+
+
+# ── Endpoint da paleta de comandos ────────────────────────────
+
+
+async def test_client_options_feed_the_command_palette(
+    client: httpx.AsyncClient, clean_tables: AsyncSession
+) -> None:
+    service = ClientsService(SqlAlchemyClientRepository(clean_tables))
+    await service.create(_input("Padaria São José"))
+    archived = await service.create(_input("Clinica Antiga"))
+    await service.set_status(archived.id, ClientStatus.ARCHIVED)
+    await clean_tables.commit()
+
+    await _sign_in(client)
+    response = await client.get("/clients/options.json")
+
+    assert response.status_code == 200
+    names = [item["name"] for item in response.json()["clients"]]
+    assert "Padaria São José" in names
+    # An archived client is not somewhere anyone wants to be sent.
+    assert "Clinica Antiga" not in names
+    assert set(response.json()["clients"][0]) == {"id", "name", "slug"}
+
+
+async def test_client_options_need_a_session(client: httpx.AsyncClient) -> None:
+    """The palette is inside the app, so its data is too."""
+    response = await client.get("/clients/options.json")
+    assert response.status_code == 303

@@ -1,0 +1,67 @@
+{#
+  The prospect score as a ring.
+
+  The ring is drawn server-side, so the number is right with JavaScript off
+  and nothing has to be computed in the browser to make it readable. The
+  score is also written as text in the middle: the ring is the summary, the
+  digits are the fact.
+
+  The "why" opens in a native popover. A plain absolutely-positioned panel
+  would be clipped by the table's own horizontal scroll; the popover lives
+  in the top layer, so it escapes that, dismisses on Esc and on an outside
+  click without a line of JavaScript, and is reachable with the keyboard
+  because it is driven by a real button.
+#}
+
+{% macro score_ring(prospect) %}
+  {%- set circumference = 97.389 -%}{# 2 * pi * 15.5 #}
+  {%- set filled = circumference * prospect.score / 100 -%}
+  {%- if prospect.score >= 70 -%}
+    {%- set band = 'high' -%}
+  {%- elif prospect.score >= 40 -%}
+    {%- set band = 'mid' -%}
+  {%- else -%}
+    {%- set band = 'low' -%}
+  {%- endif -%}
+<span class="score-cell">
+  <button
+    class="score-ring score-ring--{{ band }}"
+    type="button"
+    popovertarget="why-{{ prospect.id }}"
+    title="{{ prospect.score_explanation }}"
+    aria-label="Nota {{ prospect.score }} de 100. Ver o porquê."
+  >
+    <svg viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+      <circle class="score-ring-track" cx="18" cy="18" r="15.5" />
+      <circle
+        class="score-ring-fill"
+        cx="18"
+        cy="18"
+        r="15.5"
+        stroke-dasharray="{{ '%.2f'|format(filled) }} {{ circumference }}"
+      />
+    </svg>
+    <span class="score-ring-value">{{ prospect.score }}</span>
+  </button>
+
+  <div class="why" id="why-{{ prospect.id }}" popover>
+    <p class="why-title">{{ prospect.name }} · nota {{ prospect.score }}</p>
+    {% if prospect.score_reasons %}
+    <ul class="why-list">
+      {% for label, points in prospect.score_reasons %}
+      <li>
+        <span class="why-label">{{ label }}</span>
+        <span class="why-bar" aria-hidden="true">
+          {# Widths are relative to the heaviest rule, 25 points. #}
+          <span class="why-bar-fill" style="width: {{ (points * 4)|int }}%"></span>
+        </span>
+        <strong class="why-points">+{{ points }}</strong>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="why-empty">Nenhum sinal encontrado nesta empresa.</p>
+    {% endif %}
+  </div>
+</span>
+{% endmacro %}

@@ -43,6 +43,25 @@ def _parse_status_filter(raw: str) -> tuple[ClientStatus, ...] | None:
         return (ClientStatus.ACTIVE, ClientStatus.PAUSED)
 
 
+@router.get("/options.json")
+async def client_options(user: CurrentUser, session: DbSession) -> dict[str, list[dict[str, str]]]:
+    """Every client the command palette can jump to.
+
+    Deliberately tiny and unpaged: the palette fetches it once when it first
+    opens and filters in the browser, because a round trip per keystroke is
+    slower than the navigation the palette exists to replace. It is declared
+    before ``/{client_id}`` so the path is not read as an id.
+    """
+    clients = await _service(session).list_clients(
+        statuses=(ClientStatus.ACTIVE, ClientStatus.PAUSED)
+    )
+    return {
+        "clients": [
+            {"id": str(client.id), "name": client.name, "slug": client.slug} for client in clients
+        ]
+    }
+
+
 @router.get("")
 async def list_clients(
     request: Request,

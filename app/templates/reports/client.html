@@ -59,8 +59,15 @@ endblock %} {% block content %}
     </p>
     {% endif %}
 
+    {#
+      Building a snapshot and writing it takes a moment, and the form does
+      a full submit, so the button has to say it is working or the click
+      looks ignored and gets repeated.
+    #}
     <div class="form-actions">
-      <button class="btn btn--primary" type="submit">Gerar relatório</button>
+      <button class="btn btn--primary" type="submit" data-busy-on-submit>
+        Gerar relatório
+      </button>
     </div>
   </form>
 </section>
@@ -84,12 +91,46 @@ endblock %} {% block content %}
         {% for report in reports %}
         <tr>
           <td>
-            <a class="entity-name" href="/reports/{{ report.id }}">
+            <a
+              class="entity-name"
+              href="/reports/{{ report.id }}"
+              data-preview="peek-{{ report.id }}"
+            >
               {{ report.period.label }}
             </a>
             {% if report.snapshot.partial %}
             <span class="entity-meta">parcial</span>
             {% endif %}
+
+            {#
+              What the report froze, without opening it. There is no PDF
+              thumbnail to show: the file is built on demand and never
+              stored, so the snapshot's own numbers are the preview.
+            #}
+            <div class="peek" id="peek-{{ report.id }}" popover>
+              <p class="peek-title">{{ report.period.label }}</p>
+              {% if report.snapshot.has_data %}
+              <dl class="peek-grid">
+                <dt>Investimento</dt>
+                <dd>{{ report.snapshot.totals.spend|brl }}</dd>
+                <dt>Resultados</dt>
+                <dd>{{ report.snapshot.totals.results|num }}</dd>
+                <dt>Custo por resultado</dt>
+                <dd>
+                  {% if report.snapshot.totals.cost_per_result %}
+                  {{ report.snapshot.totals.cost_per_result|brl }}
+                  {% else %}—{% endif %}
+                </dd>
+                <dt>Campanhas</dt>
+                <dd>{{ report.snapshot.campaigns|length|num }}</dd>
+              </dl>
+              {% else %}
+              <p class="peek-empty">Mês sem dados de anúncios.</p>
+              {% endif %}
+              {% if report.snapshot.comment %}
+              <p class="peek-comment">{{ report.snapshot.comment|truncate(140) }}</p>
+              {% endif %}
+            </div>
           </td>
           <td class="num">{{ report.snapshot.totals.spend|brl }}</td>
           <td class="num">{{ report.snapshot.totals.results|num }}</td>

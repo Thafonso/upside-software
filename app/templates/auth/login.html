@@ -1,4 +1,12 @@
-{# Login: tela própria, fundo ink e o "U" da marca em marca d'água. #}
+{#
+  Login: its own screen, ink ground, with the brand lockup animating in.
+
+  The animation follows identidade/"Upside Logo Animado": the U rising
+  behind a clip, the word contracting its letter-spacing out of a blur,
+  the terracotta rule drawing itself. One difference on purpose - the
+  brand file loops, and a loop on a sign-in screen is something you have
+  to wait out. Here it plays once and settles.
+#}
 <!doctype html>
 <html lang="pt-BR">
   <head>
@@ -17,19 +25,21 @@
     />
     <link rel="stylesheet" href="/static/css/tokens.css" />
     <link rel="stylesheet" href="/static/css/app.css" />
+    <link rel="stylesheet" href="/static/css/motion.css" />
   </head>
   <body>
     <div class="auth">
-      <div class="auth-card">
-        <div class="auth-brand">
-          <span class="mark" aria-hidden="true">U</span>
-          <span class="rail-brand-word">
-            <span class="rail-brand-name">{{ brand_name|upper }}</span>
-            <span class="rail-brand-product">{{ app_name }}</span>
-          </span>
-        </div>
+      <div class="auth-lockup" aria-hidden="true">
+        <span class="lockup-u">U</span>
+        <span class="lockup-word">{{ brand_name|upper }}</span>
+        <span class="lockup-rule"></span>
+        <span class="lockup-tag">Todo negócio tem um upside</span>
+      </div>
 
-        <h1 class="auth-title">Entrar</h1>
+      <div class="auth-card">
+        <h1 class="auth-title">
+          {{ app_name }}<br /><em>o upside da sua prospecção.</em>
+        </h1>
         <p class="auth-lead">
           Acesso da equipe Upside. Fale com um administrador se precisar de uma conta.
         </p>

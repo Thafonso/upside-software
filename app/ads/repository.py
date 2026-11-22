@@ -424,6 +424,35 @@ class SqlAlchemyAdsRepository:
             for row in rows
         }
 
+    async def daily_by_account(self, since: date, until: date) -> dict[str, list[DailyPoint]]:
+        """Every account's daily series at once, for the panel sparklines.
+
+        One grouped query instead of one per client: the list already costs
+        a client lookup per row, and a second N+1 on top of it would be felt.
+        """
+        rows = await self._session.execute(
+            select(
+                CampaignDailyRow.account_id,
+                CampaignDailyRow.date,
+                func.coalesce(func.sum(CampaignDailyRow.spend), 0),
+                func.coalesce(func.sum(CampaignDailyRow.results), 0),
+            )
+            .where(CampaignDailyRow.date >= since, CampaignDailyRow.date <= until)
+            .group_by(CampaignDailyRow.account_id, CampaignDailyRow.date)
+            .order_by(CampaignDailyRow.account_id, CampaignDailyRow.date)
+        )
+
+        series: dict[str, list[DailyPoint]] = {}
+        for account_id, day, spend, results in rows:
+            series.setdefault(account_id, []).append(
+                DailyPoint(
+                    day=day,
+                    spend=Decimal(spend).quantize(Decimal("0.01")),
+                    results=int(results),
+                )
+            )
+        return series
+
     # ── registro das sincronizações ───────────────────────────
 
     async def record_sync(

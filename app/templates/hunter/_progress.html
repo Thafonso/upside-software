@@ -1,6 +1,8 @@
 {#
-  Bloco que a tela da busca troca sozinha enquanto a busca está aberta.
-  Quando termina, o bloco volta sem o hx-trigger e o polling para.
+  Block the search screen swaps on its own while the search is open.
+  When it finishes, the block comes back without the hx-trigger and the
+  polling stops. The 5s cadence is unchanged: what moves in between is
+  counted in the browser, from the start instant rendered here.
 #}
 <div
   id="search-progress"
@@ -12,7 +14,10 @@
 >
   {% if search.status.value == 'queued' %}
   <div class="state state--waiting">
-    <p class="state-title">Na fila</p>
+    <p class="state-title">
+      <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      Na fila
+    </p>
     <p>
       A busca começa assim que o scraper ficar livre. Uma de cada vez, para o
       Google não bloquear.
@@ -20,18 +25,44 @@
   </div>
 
   {% elif search.status.value == 'running' %}
-  <div class="state state--waiting">
-    <p class="state-title"><span class="pulse" aria-hidden="true"></span> Buscando no Google</p>
-    <p>
-      Começou em {{ search.started_at|datetime_br }} e costuma levar até
-      {{ (search.max_time_seconds // 60)|num }} minutos. Pode fechar esta tela: o
-      resultado fica guardado.
-    </p>
+  <div
+    class="state state--running"
+    data-started-at="{{ search.started_at.isoformat() if search.started_at else '' }}"
+    data-max-time="{{ search.max_time_seconds }}"
+  >
+    <div class="radar" aria-hidden="true">
+      <svg viewBox="0 0 120 120">
+        <circle class="radar-ring" cx="60" cy="60" r="56" />
+        <circle class="radar-ring" cx="60" cy="60" r="38" />
+        <circle class="radar-ring" cx="60" cy="60" r="20" />
+        <line class="radar-ring" x1="60" y1="4" x2="60" y2="116" />
+        <line class="radar-ring" x1="4" y1="60" x2="116" y2="60" />
+        <g class="radar-sweep">
+          <path d="M60 60 L60 4 A56 56 0 0 1 99.6 20.4 Z" />
+        </g>
+        <circle class="radar-core" cx="60" cy="60" r="3" />
+      </svg>
+    </div>
+
+    <div class="radar-text">
+      <p class="state-title">Buscando no Google</p>
+      <p>
+        Rodando há <strong data-elapsed>poucos segundos</strong>. Costuma levar
+        até {{ (search.max_time_seconds // 60)|num }} minutos. Pode fechar esta
+        tela: o resultado fica guardado.
+      </p>
+      <span class="elapsed-bar" aria-hidden="true">
+        <span class="elapsed-bar-fill" data-elapsed-bar style="width: 0%"></span>
+      </span>
+    </div>
   </div>
 
   {% elif search.status.value == 'failed' %}
   <div class="state state--failed">
-    <p class="state-title">A busca não terminou</p>
+    <p class="state-title">
+      <span class="state-icon" aria-hidden="true">!</span>
+      A busca não terminou
+    </p>
     <p>{{ search.error_message or 'Algo deu errado no caminho.' }}</p>
     <a class="btn btn--primary" href="/hunter/searches/new">Tentar outra busca</a>
   </div>
@@ -40,7 +71,10 @@
   {% set plural = '' if search.total_found == 1 else 's' %}
   <div class="list-bar">
     <p class="toolbar-count">
-      {{ search.total_found|num }} empresa{{ plural }} encontrada{{ plural }}
+      <strong data-count="{{ search.total_found }}" data-count-format="number"
+        >{{ search.total_found|num }}</strong
+      >
+      empresa{{ plural }} encontrada{{ plural }}
     </p>
     {% if search.total_found %}
     <div class="list-bar-actions">
@@ -66,7 +100,7 @@
       </thead>
       <tbody>
         {% for prospect in prospects %}
-        <tr>
+        <tr data-enter>
           <td>
             <a
               class="entity-name"

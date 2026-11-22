@@ -240,3 +240,42 @@ def test_format_dates_use_brazilian_order() -> None:
     assert format_datetime_br(datetime(2026, 11, 20, 12, 30, tzinfo=UTC)) == "20/11/2026 09:30"
     assert format_date_br(None) == "—"
     assert format_datetime_br(None) == "—"
+
+
+# ── Destaque do termo buscado ─────────────────────────────────
+
+
+def test_highlight_marks_every_occurrence() -> None:
+    from app.shared.templating import highlight
+
+    assert str(highlight("Padaria Padaria Central", "padaria")) == (
+        "<mark>Padaria</mark> <mark>Padaria</mark> Central"
+    )
+
+
+def test_highlight_ignores_accents_the_way_the_search_does() -> None:
+    from app.shared.templating import highlight
+
+    # Typing "jose" finds the row, so it has to point at something in it.
+    assert str(highlight("Padaria São José", "jose")) == "Padaria São <mark>José</mark>"
+    assert str(highlight("Café du Centre", "CAFE")) == "<mark>Café</mark> du Centre"
+
+
+def test_highlight_escapes_what_it_did_not_write() -> None:
+    from app.shared.templating import highlight
+
+    marked = str(highlight('<script>alert("x")</script> Padaria', "padaria"))
+    assert "<script>" not in marked
+    assert "&lt;script&gt;" in marked
+    assert "<mark>Padaria</mark>" in marked
+
+
+def test_highlight_leaves_the_text_alone_when_there_is_nothing_to_mark() -> None:
+    from app.shared.templating import highlight
+
+    assert str(highlight("Padaria Central", "")) == "Padaria Central"
+    assert str(highlight("Padaria Central", None)) == "Padaria Central"
+    # One letter would light up half the list, so it is not a term.
+    assert str(highlight("Padaria Central", "a")) == "Padaria Central"
+    assert str(highlight("Padaria Central", "clinica")) == "Padaria Central"
+    assert str(highlight(None, "padaria")) == ""

@@ -16,8 +16,16 @@ content %}
   </div>
 </header>
 
+{#
+  The confirmation is a toast, not a banner that stays on the page: the
+  report screen below is already the proof it worked, and the one thing
+  worth offering right away is the PDF.
+#}
 {% if just_generated %}
-<p class="alert alert--ok">Relatório gerado. O PDF já pode ser baixado.</p>
+<span
+  data-toast='{"message": "Relatório gerado.", "kind": "success", "href": "/reports/{{ report.id }}/pdf", "linkLabel": "Abrir PDF"}'
+  hidden
+></span>
 {% endif %}
 
 {% if snapshot.partial %}

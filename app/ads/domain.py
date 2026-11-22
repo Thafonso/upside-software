@@ -255,6 +255,65 @@ class Totals:
         return bool(self.spend or self.impressions or self.results)
 
 
+class Better(StrEnum):
+    """Which way is the good way for a number on a card."""
+
+    HIGHER = "higher"
+    LOWER = "lower"
+    NEUTRAL = "neutral"
+
+
+@dataclass(frozen=True, slots=True)
+class Change:
+    """One card's number against the stretch of days right before it."""
+
+    current: Decimal | None
+    previous: Decimal | None
+    better: Better = Better.NEUTRAL
+
+    @property
+    def percent(self) -> Decimal | None:
+        """``None`` when the period before gives nothing to compare against."""
+        if self.current is None or self.previous is None or self.previous == 0:
+            return None
+        return ((self.current - self.previous) / self.previous * 100).quantize(Decimal("0.1"))
+
+    @property
+    def direction(self) -> str:
+        percent = self.percent
+        if percent is None:
+            return "none"
+        if percent > 0:
+            return "up"
+        return "down" if percent < 0 else "flat"
+
+    @property
+    def is_good(self) -> bool | None:
+        """Whether the move is good news, or ``None`` when it cannot be said.
+
+        Spend moving is neither good nor bad on its own, and a cost per
+        result going down is good even though the number got smaller.
+        """
+        if self.better == Better.NEUTRAL:
+            return None
+        direction = self.direction
+        if direction in ("none", "flat"):
+            return None
+        return (direction == "up") is (self.better == Better.HIGHER)
+
+
+def compare_periods(current: Totals, previous: Totals) -> dict[str, Change]:
+    """The four cards of the client screen, each against the period before."""
+    return {
+        "spend": Change(current.spend, previous.spend, Better.NEUTRAL),
+        "results": Change(Decimal(current.results), Decimal(previous.results), Better.HIGHER),
+        "cost_per_result": Change(current.cost_per_result, previous.cost_per_result, Better.LOWER),
+        "link_clicks": Change(
+            Decimal(current.link_clicks), Decimal(previous.link_clicks), Better.HIGHER
+        ),
+    }
+
+
 @dataclass(frozen=True, slots=True)
 class DailyPoint:
     """One day on the chart."""
@@ -295,10 +354,18 @@ class ClientPanelRow:
     client_name: str
     account_ids: tuple[str, ...]
     totals: Totals
+    # The period day by day, for the row's sparkline. Empty is fine: the
+    # row still reads, it just has no shape to show.
+    series: tuple[DailyPoint, ...] = ()
 
     @property
     def has_accounts(self) -> bool:
         return bool(self.account_ids)
+
+    @property
+    def has_shape(self) -> bool:
+        """Two points or more: one day is a dot, not a line."""
+        return len(self.series) > 1
 
 
 def sync_window(today: date, *, days: int = RESYNC_DAYS) -> tuple[date, date]:

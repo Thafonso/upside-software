@@ -1,0 +1,578 @@
+/* ============================================================
+   MOTION.CSS — everything that moves, in one file.
+
+   app.css describes what the interface *is*; this file describes
+   what it *does* when something happens. Keeping them apart means
+   the reduced-motion contract can be read in one place instead of
+   hunted across 1400 lines.
+
+   Two rules hold everywhere here:
+   - only transform and opacity are animated, so nothing in this
+     file can cause a layout pass;
+   - every effect has a still version under prefers-reduced-motion,
+     at the bottom of the file.
+   ============================================================ */
+
+/* ════════════════════════════════════════════════════════════
+   PAGE TRANSITIONS
+   HTMX drives these through the View Transitions API. Browsers
+   without it swap instantly, which is the old behaviour.
+   ════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-out 180ms var(--ease-out) both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-in 200ms var(--ease-out) both;
+  }
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* The rail must not cross-fade with the content: it is the frame,
+   and a frame that blinks on every click reads as a page reload. */
+.rail {
+  view-transition-name: rail;
+}
+
+/* ════════════════════════════════════════════════════════════
+   REQUEST PROGRESS
+   A 2px line across the top of the workspace. It eases towards
+   90% while the request is open and snaps to 100% on settle, so
+   it never lies about progress it cannot measure.
+   ════════════════════════════════════════════════════════════ */
+
+.progress {
+  position: fixed;
+  top: 0;
+  left: var(--rail-width);
+  right: 0;
+  height: 2px;
+  z-index: 60;
+  pointer-events: none;
+  background: var(--terracota);
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  opacity: 0;
+  transition: transform var(--dur-slow) var(--ease-out),
+    opacity var(--dur-fast) linear;
+}
+.progress[data-active="true"] {
+  opacity: 1;
+}
+
+/* ════════════════════════════════════════════════════════════
+   SKELETONS
+   Shown through hx-indicator: HTMX puts .htmx-request on the
+   target while its request is open.
+   ════════════════════════════════════════════════════════════ */
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface-sunken);
+  border-radius: var(--radius-sm);
+  color: transparent;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--row-hover),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* While a list is reloading, its rows become their own skeleton:
+   the text goes transparent and the shimmer runs over the cells.
+   The table keeps its height, so the page does not jump. */
+.htmx-request table.data tbody td {
+  position: relative;
+  color: transparent;
+  overflow: hidden;
+}
+.htmx-request table.data tbody td * {
+  opacity: 0;
+}
+.htmx-request table.data tbody td::after {
+  content: "";
+  position: absolute;
+  inset: 0.45rem var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+}
+.htmx-request table.data tbody td::before {
+  content: "";
+  position: absolute;
+  inset: 0.45rem var(--space-4);
+  z-index: 1;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--row-hover),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+/* ════════════════════════════════════════════════════════════
+   TOASTS
+   ════════════════════════════════════════════════════════════ */
+
+.toast-region {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: min(360px, calc(100vw - 2 * var(--space-5)));
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--pedra);
+  border-radius: var(--radius-md);
+  box-shadow: var(--inset-top), var(--shadow-card);
+  font-size: var(--fs-small);
+  animation: toast-in var(--dur-base) var(--ease-out) both;
+}
+.toast--success {
+  border-left-color: var(--success);
+}
+.toast--error {
+  border-left-color: var(--error);
+}
+.toast--info {
+  border-left-color: var(--terracota);
+}
+.toast[data-leaving="true"] {
+  animation: toast-out var(--dur-fast) var(--ease-out) both;
+}
+.toast-body {
+  flex: 1;
+  min-width: 0;
+}
+.toast-close {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  line-height: 1;
+  cursor: pointer;
+}
+.toast-close:hover {
+  color: var(--text);
+}
+.toast a {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   COMMAND PALETTE
+   ════════════════════════════════════════════════════════════ */
+
+.palette[hidden] {
+  display: none;
+}
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  padding-top: 12vh;
+  background: rgba(22, 18, 13, 0.55);
+  backdrop-filter: blur(3px);
+  animation: fade-in var(--dur-fast) var(--ease-out) both;
+}
+.palette-box {
+  width: min(560px, calc(100vw - 2 * var(--space-5)));
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--inset-top), var(--shadow-card);
+  overflow: hidden;
+  animation: palette-in var(--dur-base) var(--ease-out) both;
+}
+.palette-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-bottom: 1px solid var(--line-soft);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--fs-lead);
+}
+.palette-input:focus {
+  outline: none;
+}
+.palette-list {
+  max-height: 46vh;
+  overflow-y: auto;
+  list-style: none;
+  padding: var(--space-2);
+}
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 0.5rem var(--space-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text);
+}
+.palette-item[aria-selected="true"] {
+  background: var(--row-hover);
+  box-shadow: inset 2px 0 0 var(--terracota);
+}
+.palette-kind {
+  margin-left: auto;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.palette-empty {
+  padding: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--fs-small);
+}
+.palette-foot {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  border-top: 1px solid var(--line-soft);
+  background: var(--surface-sunken);
+  font-size: var(--fs-micro);
+  color: var(--text-muted);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.99);
+  }
+}
+
+/* ── Keyboard shortcut panel ─────────────────────────────── */
+
+kbd {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  text-align: center;
+  color: var(--text);
+}
+
+.shortcuts-list {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+}
+.shortcuts-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--fs-small);
+}
+
+/* ════════════════════════════════════════════════════════════
+   BUTTONS
+   ════════════════════════════════════════════════════════════ */
+
+.btn {
+  position: relative;
+  transition: background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* The warm highlight follows the cursor. motion.js writes --mx and
+   --my; without it the gradient simply sits in the middle, unseen. */
+.btn--primary {
+  overflow: hidden;
+}
+.btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle 70px at var(--mx, 50%) var(--my, 50%),
+    rgba(237, 232, 224, 0.22),
+    transparent 70%
+  );
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+.btn--primary:hover:not(:disabled)::after {
+  opacity: 1;
+}
+
+/* A button that fired a request says so until the answer lands. */
+.btn[aria-busy="true"] {
+  pointer-events: none;
+}
+.btn[aria-busy="true"]::before {
+  content: "";
+  width: 0.85em;
+  height: 0.85em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   COUNTING NUMBERS AND STAGGERED ROWS
+   ════════════════════════════════════════════════════════════ */
+
+[data-count] {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  tr[data-enter] {
+    animation: row-in var(--dur-base) var(--ease-out) both;
+    animation-delay: calc(var(--enter-index, 0) * 20ms);
+  }
+}
+@keyframes row-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   ROW FLASH
+   Confirms a change that replaced the whole table: without it the new
+   status lands silently and nobody is sure the click took.
+   ════════════════════════════════════════════════════════════ */
+
+.row-flash td {
+  animation: flash 1.2s var(--ease-out) both;
+}
+@keyframes flash {
+  0% {
+    background: var(--row-selected);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   JOB STATUS
+   The dot each badge already carries, taught to say what the status
+   means: running breathes, queued counts, failed holds still. Failure
+   not moving is the point - nothing is happening to that job.
+   ════════════════════════════════════════════════════════════ */
+
+.badge--running::before,
+.badge--search-running::before {
+  animation: breathe 1.6s ease-in-out infinite;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.3;
+    transform: scale(0.75);
+  }
+}
+
+.badge--queued::before,
+.badge--search-queued::before {
+  animation: waiting 1.8s ease-in-out infinite;
+}
+@keyframes waiting {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   LOGIN LOCKUP
+
+   Adapted from identidade/"Upside Logo Animado": the U rising behind a
+   clip, the word pulling its letter-spacing in out of a blur, the rule
+   drawing itself, the tagline last. The brand file loops every 5s; this
+   one runs once with `both`, because a sign-in screen that keeps
+   restarting its own logo is a screen you wait out instead of use.
+   ════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: no-preference) {
+  .lockup-u {
+    animation: lockup-u 1100ms var(--ease-out) both;
+  }
+  .lockup-word {
+    animation: lockup-word 900ms var(--ease-out) 420ms both;
+  }
+  .lockup-rule {
+    animation: lockup-rule 700ms var(--ease-out) 760ms both;
+  }
+  .lockup-tag {
+    animation: lockup-tag 600ms var(--ease-out) 1000ms both;
+  }
+  .auth-card {
+    animation: lockup-tag 700ms var(--ease-out) 240ms both;
+  }
+}
+
+@keyframes lockup-u {
+  from {
+    clip-path: inset(106% 0 0 0);
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes lockup-word {
+  from {
+    opacity: 0;
+    letter-spacing: 0.74em;
+    filter: blur(5px);
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    letter-spacing: 0.42em;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+@keyframes lockup-rule {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes lockup-tag {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════
+   REDUCED MOTION
+   app.css already flattens every transition and animation to
+   0.01ms. What is left here is the handful of effects that must
+   disappear rather than merely finish instantly.
+   ════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after,
+  .htmx-request table.data tbody td::before {
+    display: none;
+  }
+  .progress {
+    transition: none;
+  }
+  .palette,
+  .palette-box,
+  .toast {
+    animation: none;
+  }
+  /* The flash is information, not decoration: with motion off it holds
+     the tint instead of fading it away. */
+  .row-flash td {
+    animation: none;
+    background: var(--row-selected);
+  }
+  .radar-sweep path,
+  .dots i,
+  .badge--running::before,
+  .badge--search-running::before,
+  .badge--queued::before,
+  .badge--search-queued::before {
+    animation: none;
+  }
+}

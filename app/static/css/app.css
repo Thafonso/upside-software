@@ -26,12 +26,12 @@ body {
   font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--text);
-  background: var(--paper);
+  background: var(--app-bg);
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   text-decoration: none;
 }
 a:hover {
@@ -236,7 +236,7 @@ a:hover {
   font-weight: 500;
   line-height: 1.05;
   letter-spacing: -0.015em;
-  color: var(--ink);
+  color: var(--heading);
 }
 .page-subtitle {
   margin-top: var(--space-2);
@@ -283,25 +283,25 @@ a:hover {
 
 .btn--primary {
   background: var(--terracota);
-  color: var(--paper);
+  color: var(--on-accent);
 }
 .btn--primary:hover:not(:disabled) {
   background: var(--terracota-dark);
 }
 
 .btn--ink {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--control-strong);
+  color: var(--control-strong);
 }
 .btn--ink:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--control-strong);
+  color: var(--control-strong-ground);
 }
 
 .btn--quiet {
   border-color: var(--line);
   color: var(--text-muted);
-  background: var(--paper-3);
+  background: var(--surface);
 }
 .btn--quiet:hover:not(:disabled) {
   border-color: var(--pedra);
@@ -323,7 +323,7 @@ a:hover {
 }
 .btn--danger:hover:not(:disabled) {
   background: var(--error);
-  color: var(--paper);
+  color: var(--on-accent);
 }
 
 .btn--sm {
@@ -368,7 +368,7 @@ a:hover {
   font-family: var(--font-body);
   font-size: var(--fs-base);
   color: var(--text);
-  background: var(--paper-3);
+  background: var(--input-bg);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   transition: border-color 0.18s, background 0.18s;
@@ -383,7 +383,7 @@ a:hover {
 .textarea:focus {
   outline: none;
   border-color: var(--terracota);
-  background: #fff;
+  background: var(--input-bg-focus);
 }
 .input[aria-invalid="true"],
 .select[aria-invalid="true"],
@@ -415,7 +415,7 @@ a:hover {
 }
 
 .form-card {
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
@@ -437,7 +437,7 @@ a:hover {
   font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--heading);
   margin-bottom: var(--space-4);
 }
 .form-actions {
@@ -484,7 +484,7 @@ a:hover {
    ════════════════════════════════════════════════════════════ */
 
 .table-wrap {
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
   overflow-x: auto;
@@ -507,7 +507,7 @@ table.data thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--paper-2);
+  background: var(--surface-sunken);
   padding: 0.7rem var(--space-4);
   text-align: left;
   font-size: var(--fs-micro);
@@ -557,11 +557,11 @@ table.data .clip {
 
 /* Nome que e tambem link: continua sendo o nome, nao um link azul. */
 a.entity-name {
-  color: var(--ink);
+  color: var(--heading);
   text-decoration: none;
 }
 a.entity-name:hover {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -582,7 +582,7 @@ a.entity-name:hover {
   border-radius: var(--radius-sm);
   background: var(--terracota-soft);
   border: 1px solid rgba(184, 95, 64, 0.22);
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   font-size: var(--fs-micro);
   font-weight: 600;
 }
@@ -592,7 +592,7 @@ a.entity-name:hover {
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--ink);
+  color: var(--heading);
 }
 .entity-meta {
   display: block;
@@ -617,7 +617,7 @@ a.entity-name:hover {
   padding: 0.22rem 0.6rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--line);
-  background: var(--paper-2);
+  background: var(--surface-sunken);
   color: var(--text-muted);
   font-size: var(--fs-micro);
   font-weight: 500;
@@ -636,7 +636,7 @@ a.entity-name:hover {
   border-color: rgba(63, 125, 82, 0.25);
 }
 .badge--paused {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   background: var(--terracota-soft);
   border-color: rgba(184, 95, 64, 0.22);
 }
@@ -649,7 +649,7 @@ a.entity-name:hover {
   color: var(--text-muted);
 }
 .badge--running {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   background: var(--terracota-soft);
   border-color: rgba(184, 95, 64, 0.22);
 }
@@ -669,7 +669,7 @@ a.entity-name:hover {
   color: var(--text-muted);
 }
 .badge--search-running {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   background: var(--terracota-soft);
   border-color: rgba(184, 95, 64, 0.22);
 }
@@ -697,7 +697,7 @@ a.entity-name:hover {
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
 }
@@ -712,7 +712,7 @@ a.entity-name:hover {
   font-size: var(--fs-figure);
   font-weight: 500;
   line-height: 1;
-  color: var(--ink);
+  color: var(--heading);
   font-variant-numeric: lining-nums tabular-nums;
   font-feature-settings: "lnum" 1, "tnum" 1;
 }
@@ -730,7 +730,7 @@ a.entity-name:hover {
 .chart-card {
   margin: 0;
   padding: var(--space-4);
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
 }
@@ -782,7 +782,7 @@ a.entity-name:hover {
   font-size: 1.05rem;
   font-weight: 600;
   line-height: 1;
-  color: var(--ink);
+  color: var(--heading);
   font-variant-numeric: tabular-nums;
 }
 .score-bar {
@@ -837,13 +837,13 @@ a.entity-name:hover {
   color: var(--text-muted);
 }
 .legend summary:hover {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
 }
 .legend-list {
   list-style: none;
   margin: var(--space-3) 0;
   padding: var(--space-3) var(--space-4);
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
 }
@@ -855,7 +855,7 @@ a.entity-name:hover {
 }
 .legend-list strong {
   font-variant-numeric: tabular-nums;
-  color: var(--terracota-dark);
+  color: var(--accent-text);
 }
 .legend-note {
   color: var(--text-muted);
@@ -865,7 +865,7 @@ a.entity-name:hover {
 
 .state {
   padding: var(--space-6) var(--space-5);
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
 }
@@ -876,7 +876,7 @@ a.entity-name:hover {
   font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--heading);
   margin-bottom: var(--space-2);
 }
 .state p {
@@ -945,7 +945,7 @@ a.entity-name:hover {
   border-color: rgba(63, 125, 82, 0.25);
 }
 .badge--account-paused {
-  color: var(--terracota-dark);
+  color: var(--accent-text);
   background: var(--terracota-soft);
   border-color: rgba(184, 95, 64, 0.22);
 }
@@ -966,7 +966,7 @@ a.entity-name:hover {
   gap: var(--space-5);
   padding: var(--space-3) var(--space-4);
   margin-bottom: var(--space-4);
-  background: var(--paper-3);
+  background: var(--surface);
   border: 1px solid var(--line-soft);
   border-radius: var(--radius-md);
 }
@@ -982,7 +982,7 @@ a.entity-name:hover {
   font-size: 1.05rem;
   font-weight: 600;
   line-height: 1;
-  color: var(--ink);
+  color: var(--heading);
   font-variant-numeric: tabular-nums;
 }
 
@@ -991,7 +991,7 @@ a.entity-name:hover {
   display: block;
   font-weight: 500;
   letter-spacing: -0.005em;
-  color: var(--ink);
+  color: var(--heading);
 }
 
 .error-text {
@@ -1020,7 +1020,7 @@ a.entity-name:hover {
   font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 500;
-  color: var(--ink);
+  color: var(--heading);
   margin-bottom: var(--space-2);
 }
 .empty p {
@@ -1041,12 +1041,12 @@ a.entity-name:hover {
   border-left-width: 3px;
   border-radius: var(--radius-sm);
   font-size: var(--fs-small);
-  background: var(--paper-3);
+  background: var(--surface);
 }
 .alert--ok {
   border-left-color: var(--success);
   background: var(--success-soft);
-  color: #2c5a3a;
+  color: var(--success-text);
 }
 .alert--error {
   border-left-color: var(--error);
@@ -1060,27 +1060,90 @@ a.entity-name:hover {
 
 .auth {
   min-height: 100vh;
+  /* One column, centred: the lockup sits above the form rather than
+     beside it, so the U lands in the middle of the screen and the eye
+     goes straight down from it into the first field. */
   display: grid;
-  place-items: center;
-  padding: var(--space-5);
+  justify-items: center;
+  align-content: center;
+  gap: var(--space-6);
+  padding: var(--space-6);
   background: var(--ink);
   color: var(--on-ink);
   position: relative;
   overflow: hidden;
 }
+
+/* The same technical grid as the workspace, so signing in already looks
+   like the place you are signing into. */
+.auth::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--line-ink-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-ink-soft) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  -webkit-mask-image: radial-gradient(90% 70% at 50% 50%, black 20%, transparent 80%);
+  mask-image: radial-gradient(90% 70% at 50% 50%, black 20%, transparent 80%);
+}
+/* The ghost U of the identity, bled off the corner. */
 .auth::before {
   content: "U";
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
+  right: -6vw;
+  bottom: -24vh;
+  z-index: 0;
   font-family: var(--font-heading);
   font-weight: 500;
-  font-size: clamp(360px, 46vw, 640px);
+  font-size: clamp(360px, 46vw, 680px);
   line-height: 0.7;
   color: rgba(237, 232, 224, 0.035);
   pointer-events: none;
   user-select: none;
+}
+
+/* ── The brand lockup, animating in once ─────────────────── */
+
+.auth-lockup {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  user-select: none;
+}
+/* Smaller than beside the form: stacked, the lockup and the form share
+   the screen's height, and the U has to leave room for the fields. */
+.lockup-u {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: clamp(4.5rem, 11vw, 8rem);
+  line-height: 0.74;
+  color: var(--paper);
+}
+.lockup-word {
+  margin-top: var(--space-4);
+  font-weight: 700;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  letter-spacing: 0.42em;
+  text-indent: 0.42em;
+  color: var(--paper);
+}
+.lockup-rule {
+  width: clamp(120px, 14vw, 240px);
+  height: 1.5px;
+  margin-top: var(--space-4);
+  background: var(--terracota);
+  transform-origin: center;
+}
+.lockup-tag {
+  margin-top: var(--space-4);
+  font-size: var(--fs-micro);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--on-ink-muted);
 }
 
 .auth-card {
@@ -1088,12 +1151,23 @@ a.entity-name:hover {
   z-index: 1;
   width: 100%;
   max-width: 390px;
+  /* The heading and the lead are centred under the lockup; the fields
+     below are not, because a label is read from its left edge. */
+  text-align: center;
+}
+.auth-card .field,
+.auth-card .auth-alert {
+  text-align: left;
 }
 .auth-brand {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-6);
+}
+.auth-title em {
+  font-style: italic;
+  color: var(--areia);
 }
 .auth-title {
   font-family: var(--font-heading);
@@ -1200,11 +1274,628 @@ a.entity-name:hover {
 .report-note {
   margin: 0 0 var(--space-5);
   padding: var(--space-3) var(--space-4);
-  background: var(--paper-3);
+  background: var(--surface);
   border-left: 3px solid var(--areia);
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   font-size: var(--fs-small);
   color: var(--text-muted);
+}
+
+/* ════════════════════════════════════════════════════════════
+   HUNTER — score ring, the "why" popover, quick actions, chips
+   ════════════════════════════════════════════════════════════ */
+
+.score-cell {
+  display: inline-flex;
+}
+
+/* The ring is the summary; the digits in the middle are the fact. Colour
+   bands: stone under 40, sand to 70, terracotta above it. */
+.score-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  --ring: var(--pedra);
+}
+.score-ring--mid {
+  --ring: var(--areia);
+}
+.score-ring--high {
+  --ring: var(--terracota);
+}
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+  /* Start the arc at twelve o'clock instead of three. */
+  transform: rotate(-90deg);
+}
+.score-ring-track {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 3;
+}
+.score-ring-fill {
+  fill: none;
+  stroke: var(--ring);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-slow) var(--ease-out);
+}
+.score-ring-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--heading);
+}
+.score-ring:hover .score-ring-value {
+  color: var(--accent-text);
+}
+
+/* ── The "why" popover ───────────────────────────────────── */
+
+.why {
+  position: fixed;
+  margin: 0;
+  width: min(320px, calc(100vw - 2rem));
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--inset-top), var(--shadow-card);
+}
+.why:not(:popover-open) {
+  display: none;
+}
+.why-title {
+  margin-bottom: var(--space-3);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--heading);
+}
+.why-list {
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+.why-list li {
+  display: grid;
+  grid-template-columns: 1fr 64px 2.4rem;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--fs-small);
+}
+.why-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.why-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--terracota);
+}
+.why-points {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-text);
+}
+.why-empty {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+
+/* ── Rows that answer back ───────────────────────────────── */
+
+/* A sticky header over a scrolling body needs its own ground, or the rows
+   read through it. */
+table.data thead th {
+  background: color-mix(in srgb, var(--surface-sunken) 92%, transparent);
+  backdrop-filter: blur(6px);
+}
+
+table.data--rows tbody tr {
+  box-shadow: inset 2px 0 0 transparent;
+  transition: background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+table.data--rows tbody tr:hover,
+table.data--rows tbody tr:focus-within {
+  background: var(--row-hover);
+  box-shadow: inset 2px 0 0 var(--terracota);
+}
+
+/* Quick actions stay out of the way until the row is pointed at - or until
+   something inside it takes focus, which is how they reach the keyboard. */
+.quick {
+  display: flex;
+  gap: var(--space-1);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+tr:hover .quick,
+tr:focus-within .quick {
+  opacity: 1;
+}
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: var(--control-height-sm);
+  padding: 0 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-sunken);
+  color: var(--text-muted);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.icon-btn:hover {
+  border-color: var(--terracota);
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+/* ── Filter chips ────────────────────────────────────────── */
+
+.chip {
+  position: relative; /* holds the hidden checkbox inside the chip */
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height-sm);
+  padding: 0 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+.chip:hover {
+  border-color: var(--pedra);
+  color: var(--text);
+}
+/* The checkbox still exists and still carries the state; it is only moved
+   out of sight, so the keyboard and the form keep working. */
+.chip input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+.chip:has(input:checked) {
+  border-color: var(--terracota);
+  background: var(--terracota-soft);
+  color: var(--accent-text);
+  font-weight: 500;
+}
+.chip:has(input:focus-visible) {
+  outline: 2px solid var(--terracota);
+  outline-offset: 2px;
+}
+.chip span::before {
+  content: "+";
+  margin-right: 0.3em;
+  opacity: 0.5;
+}
+.chip:has(input:checked) span::before {
+  content: "✓";
+  opacity: 1;
+}
+
+/* ── Search in flight ────────────────────────────────────── */
+
+.state--running {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-wrap: wrap;
+}
+.radar {
+  width: 112px;
+  height: 112px;
+  flex-shrink: 0;
+}
+.radar svg {
+  width: 100%;
+  height: 100%;
+}
+.radar-ring {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+}
+.radar-core {
+  fill: var(--terracota);
+}
+.radar-sweep path {
+  fill: var(--terracota);
+  opacity: 0.22;
+  transform-origin: 60px 60px;
+  animation: sweep 2.8s linear infinite;
+}
+@keyframes sweep {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.radar-text {
+  flex: 1;
+  min-width: 15rem;
+}
+.elapsed-bar {
+  display: block;
+  margin-top: var(--space-3);
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.elapsed-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--terracota);
+  transition: width var(--dur-slow) linear;
+}
+
+/* Queue: three dots taking turns, so "waiting" looks different from
+   "stopped". */
+.dots {
+  display: inline-flex;
+  gap: 3px;
+  margin-right: var(--space-2);
+}
+.dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pedra);
+  animation: dot 1.2s ease-in-out infinite;
+}
+.dots i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.dots i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes dot {
+  50% {
+    opacity: 0.25;
+    transform: translateY(-2px);
+  }
+}
+
+/* Failure holds still on purpose: nothing is happening any more. */
+.state-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: var(--space-2);
+  border: 1px solid var(--error);
+  border-radius: 50%;
+  color: var(--error);
+  font-size: 0.8em;
+  font-weight: 700;
+}
+
+/* ════════════════════════════════════════════════════════════
+   ADS — sparklines, the segmented period, proportion bars
+   ════════════════════════════════════════════════════════════ */
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 28px;
+  margin-top: var(--space-2);
+  overflow: visible;
+}
+.spark-line {
+  fill: none;
+  stroke: var(--chart-spend);
+  stroke-width: 1.5;
+  /* The viewBox is stretched to the box, so an unscaled stroke would be
+     drawn thick horizontally and thin vertically. */
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+.spark-area {
+  fill: var(--chart-spend);
+  opacity: 0.12;
+  stroke: none;
+}
+.spark--results .spark-line {
+  stroke: var(--chart-results);
+}
+.spark--results .spark-area {
+  fill: var(--chart-results);
+}
+.spark--empty {
+  display: block;
+  height: 28px;
+}
+
+/* In a table the sparkline is a column of its own, narrow and quiet. */
+.col-spark {
+  width: 110px;
+}
+.col-spark .spark {
+  height: 24px;
+  margin: 0;
+}
+
+/* The cost-per-result bar under the figure. */
+.ratio {
+  display: block;
+  width: 72px;
+  height: 3px;
+  margin-top: 4px;
+  margin-left: auto;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ratio-fill {
+  display: block;
+  height: 100%;
+  background: var(--terracota);
+}
+
+/* ── Segmented period control ────────────────────────────── */
+
+.segmented {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
+}
+.segment {
+  position: relative;
+  z-index: 1;
+  padding: 0.35rem 0.85rem;
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.segment input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.segment:hover {
+  color: var(--text);
+}
+.segment:has(input:checked) {
+  color: var(--heading);
+  font-weight: 500;
+}
+.segment:has(input:focus-visible) {
+  outline: 2px solid var(--terracota);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
+/* The marker sits under the labels and slides. Width and offset are
+   written by segmented.js; with no JavaScript it simply stays hidden and
+   the checked label is still bold. */
+.segment-marker {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--inset-top), 0 1px 2px rgba(0, 0, 0, 0.12);
+  opacity: 0;
+  transition: transform var(--dur-base) var(--ease-out),
+    width var(--dur-base) var(--ease-out), opacity var(--dur-fast) linear;
+}
+.segment-marker[data-ready="true"] {
+  opacity: 1;
+}
+
+/* ════════════════════════════════════════════════════════════
+   REPORTS — the hover preview
+   ════════════════════════════════════════════════════════════ */
+
+.peek {
+  position: fixed;
+  margin: 0;
+  width: min(280px, calc(100vw - 2rem));
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--inset-top), var(--shadow-card);
+  /* It follows the cursor's row; it must never eat the click. */
+  pointer-events: none;
+}
+.peek:not(:popover-open) {
+  display: none;
+}
+.peek-title {
+  margin-bottom: var(--space-2);
+  font-family: var(--font-heading);
+  font-size: var(--fs-lead);
+  color: var(--heading);
+}
+.peek-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem var(--space-3);
+  font-size: var(--fs-small);
+}
+.peek-grid dt {
+  color: var(--text-muted);
+}
+.peek-grid dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--heading);
+}
+.peek-empty,
+.peek-comment {
+  font-size: var(--fs-small);
+  color: var(--text-muted);
+}
+.peek-comment {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line-soft);
+  font-style: italic;
+}
+
+/* ── The matched part of a search term ───────────────────── */
+
+mark {
+  padding: 0 0.1em;
+  border-radius: 2px;
+  background: var(--terracota-soft);
+  color: inherit;
+  /* Underline as well as colour: the match has to survive greyscale. */
+  box-shadow: inset 0 -1px 0 var(--terracota);
+}
+
+/* ════════════════════════════════════════════════════════════
+   ATMOSPHERE
+
+   Three layers of depth behind the workspace, all of them nearly
+   invisible on their own. Both the grid and the glow are fixed and
+   painted on pseudo-elements, never on .main itself: a mask on
+   .main would mask every child along with it, and a background
+   that scrolled would read as content.
+   ════════════════════════════════════════════════════════════ */
+
+.main {
+  position: relative;
+  background: var(--app-bg);
+}
+
+/* The technical grid: one hairline every --grid-size, faded out
+   towards the edges so it never frames anything. */
+.main::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 0 var(--rail-width);
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  -webkit-mask-image: radial-gradient(130% 95% at 50% 0%, black 30%, transparent 82%);
+  mask-image: radial-gradient(130% 95% at 50% 0%, black 30%, transparent 82%);
+}
+
+/* The warm glow of the brand carousel, behind the page title. */
+.main::after {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto var(--rail-width);
+  height: 420px;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--glow-warm);
+}
+
+/* Everything readable sits above both layers. */
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+/* Depth, in one place: a hairline border is already on each
+   component, so this only adds the top inset catching the light
+   and the shadow underneath it. */
+.form-card,
+.table-wrap,
+.kpi,
+.chart-card,
+.state,
+.tally,
+.legend-list,
+.alert,
+.report-note {
+  box-shadow: var(--inset-top), var(--shadow-card);
+}
+
+/* ── Editorial page title ────────────────────────────────── */
+
+.page-eyebrow {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+  padding: 0.2rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--title-accent);
+}
+
+/* The second half of a title, in the identity's italic sand. */
+.page-title em,
+.page-title .soft {
+  font-style: italic;
+  color: var(--title-accent);
+}
+
+/* ── Theme toggle, in the rail foot ──────────────────────── */
+
+.theme-toggle {
+  display: flex;
+  width: 100%;
+  margin-bottom: var(--space-3);
+  padding: 2px;
+  border: 1px solid var(--line-ink-soft);
+  border-radius: var(--radius-sm);
+  background: rgba(237, 232, 224, 0.04);
+}
+.theme-toggle button {
+  flex: 1;
+  padding: 0.3rem 0;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  color: var(--on-ink-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.theme-toggle button:hover {
+  color: var(--paper);
+}
+.theme-toggle button[aria-pressed="true"] {
+  background: rgba(237, 232, 224, 0.1);
+  color: var(--paper);
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -1254,6 +1945,19 @@ a.entity-name:hover {
   }
   .page {
     padding: var(--space-5) var(--space-4) var(--space-6);
+  }
+  .auth {
+    gap: var(--space-5);
+  }
+  .lockup-u {
+    font-size: 4rem;
+  }
+  .lockup-tag {
+    display: none;
+  }
+  .main::before,
+  .main::after {
+    inset-inline-start: 0;
   }
 }
 

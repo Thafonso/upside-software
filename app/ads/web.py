@@ -15,6 +15,7 @@ from app.ads.domain import (
     Period,
     PeriodPreset,
     build_account_input,
+    compare_periods,
     resolve_period,
 )
 from app.ads.jobs import RESYNC_7D, SYNC_ACCOUNT, SYNC_STRUCTURE
@@ -164,6 +165,10 @@ async def panel(
     until: str = "",
 ) -> Response:
     period = read_period(preset, since, until)
+    rows = await _service(session).panel_rows(period)
+    # The bar on each row is drawn against the worst cost per result on
+    # screen, so the comparison is between the clients actually listed.
+    costs = [row.totals.cost_per_result for row in rows if row.totals.cost_per_result]
     return page(
         request,
         "ads/panel.html",
@@ -171,7 +176,8 @@ async def panel(
         active="ads",
         period=period,
         presets=ALL_PRESETS,
-        rows=await _service(session).panel_rows(period),
+        rows=rows,
+        worst_cost=max(costs) if costs else None,
     )
 
 
@@ -199,6 +205,10 @@ async def client_panel(
     period = read_period(preset, since, until)
     service = _service(session)
     series = await service.client_series(client_id, period)
+    totals = await service.client_totals(client_id, period)
+    # The same stretch of days immediately before, so every card can say
+    # whether its number moved and which way.
+    earlier = await service.client_totals(client_id, period.previous())
 
     return page(
         request,
@@ -209,8 +219,13 @@ async def client_panel(
         period=period,
         presets=ALL_PRESETS,
         accounts=await service.list_accounts(client_id=client_id),
-        totals=await service.client_totals(client_id, period),
+        totals=totals,
+        changes=compare_periods(totals, earlier),
         campaigns=await service.client_campaigns(client_id, period),
+        spark={
+            "spend": [float(point.spend) for point in series],
+            "results": [point.results for point in series],
+        },
         chart={
             "days": [point.day.strftime("%d/%m") for point in series],
             "spend": [float(point.spend) for point in series],

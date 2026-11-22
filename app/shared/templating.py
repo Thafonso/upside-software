@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import unicodedata
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -10,6 +11,7 @@ from urllib.parse import urlencode
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup, escape
 
 from app.shared.clock import to_local
 from app.shared.models import AppUser
@@ -89,6 +91,49 @@ def format_site(url: str | None, limit: int = 28) -> str:
     return shown if len(shown) <= limit else f"{shown[: limit - 1]}…"
 
 
+def highlight(value: str | None, term: str | None) -> Markup:
+    """Wrap every occurrence of ``term`` in ``<mark>``.
+
+    Everything is escaped first and only the marks are added back, so a
+    client named ``<script>`` is still just a name. Accents are ignored
+    when matching, the way the search itself ignores them, or typing
+    "jose" would find the row and then fail to point at anything in it.
+    """
+    text = value or ""
+    needle = (term or "").strip()
+    if not needle or len(needle) < 2:
+        return Markup(escape(text))
+
+    folded_text = _fold(text)
+    folded_needle = _fold(needle)
+    if folded_needle not in folded_text:
+        return Markup(escape(text))
+
+    out: list[str] = []
+    start = 0
+    width = len(folded_needle)
+    while True:
+        found = folded_text.find(folded_needle, start)
+        if found < 0:
+            break
+        out.append(str(escape(text[start:found])))
+        out.append(f"<mark>{escape(text[found : found + width])}</mark>")
+        start = found + width
+    out.append(str(escape(text[start:])))
+    return Markup("".join(out))
+
+
+def _fold(value: str) -> str:
+    """Lowercase and strip accents, keeping the string the same length.
+
+    Length matters: the folded string is used to find positions in the
+    original one, so a normalisation that dropped or added characters
+    would make the marks land in the wrong place.
+    """
+    stripped = unicodedata.normalize("NFD", value.lower())
+    return "".join(char for char in stripped if not unicodedata.combining(char))
+
+
 def urlencode_params(values: dict[str, str]) -> str:
     """Carry the current filters onto a link: '?a=1&b=2', or '' if empty."""
     kept = {key: value for key, value in values.items() if value}
@@ -104,6 +149,7 @@ templates.env.filters["pct_br"] = format_percent_br
 templates.env.filters["phone_br"] = format_phone_br
 templates.env.filters["site_br"] = format_site
 templates.env.filters["urlencode_params"] = urlencode_params
+templates.env.filters["highlight"] = highlight
 templates.env.globals["app_name"] = "LeadHunter"
 templates.env.globals["brand_name"] = "Upside"
 

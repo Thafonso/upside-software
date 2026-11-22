@@ -222,6 +222,7 @@ class AdsService:
             return []
 
         by_account = await self._repository.totals_by_account(period.since, period.until)
+        series_by_account = await self._repository.daily_by_account(period.since, period.until)
 
         grouped: dict[UUID, list[AdAccount]] = {}
         for account in accounts:
@@ -237,6 +238,9 @@ class AdsService:
                     client_name=client.name if client else "Cliente removido",
                     account_ids=tuple(account.id for account in owned),
                     totals=totals,
+                    series=_merge_series(
+                        [series_by_account.get(account.id, []) for account in owned]
+                    ),
                 )
             )
 
@@ -260,6 +264,25 @@ class AdsService:
     async def _account_ids(self, client_id: UUID) -> tuple[str, ...]:
         accounts = await self._repository.list_accounts(client_id=client_id)
         return tuple(account.id for account in accounts)
+
+
+def _merge_series(parts: list[list[DailyPoint]]) -> tuple[DailyPoint, ...]:
+    """One line per client, even when the client has several accounts."""
+    if not parts:
+        return ()
+    if len(parts) == 1:
+        return tuple(parts[0])
+
+    by_day: dict[date, tuple[Decimal, int]] = {}
+    for part in parts:
+        for point in part:
+            spend, results = by_day.get(point.day, (Decimal("0.00"), 0))
+            by_day[point.day] = (spend + point.spend, results + point.results)
+
+    return tuple(
+        DailyPoint(day=day, spend=spend, results=results)
+        for day, (spend, results) in sorted(by_day.items())
+    )
 
 
 def _add_up(totals: Iterable[Totals]) -> Totals:

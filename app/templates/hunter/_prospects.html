@@ -1,7 +1,9 @@
 {#
-  Fragmento HTMX: contagem, barra de ações e tabela de empresas.
-  Cada ação de linha devolve este bloco inteiro, já refiltrado.
+  HTMX fragment: the count, the action bar and the company table.
+  Every row action returns this whole block, already refiltered.
 #}
+{% from "_components/score.html" import score_ring %}
+
 {% macro filter_fields() %}
 <input type="hidden" name="search_id" value="{{ query.search_id }}" />
 <input type="hidden" name="filter_status" value="{{ query.status }}" />
@@ -16,7 +18,8 @@
 
 <div class="list-bar">
   <p class="toolbar-count">
-    {{ total|num }} empresa{{ '' if total == 1 else 's' }}
+    <strong data-count="{{ total }}" data-count-format="number">{{ total|num }}</strong>
+    empresa{{ '' if total == 1 else 's' }}
   </p>
   <div class="list-bar-actions">
     <button
@@ -34,7 +37,7 @@
 
 {% if prospects %}
 <div class="table-wrap">
-  <table class="data">
+  <table class="data data--rows">
     <thead>
       <tr>
         <th scope="col">Empresa</th>
@@ -49,7 +52,7 @@
     </thead>
     <tbody>
       {% for prospect in prospects %}
-      <tr>
+      <tr data-enter data-prospect-id="{{ prospect.id }}">
         <td>
           <a
             class="entity-name"
@@ -62,14 +65,7 @@
           <span class="entity-meta">{{ prospect.category or 'sem categoria' }}</span>
         </td>
 
-        <td class="num">
-          <span class="score" title="{{ prospect.score_explanation }}">
-            <span class="score-value">{{ prospect.score }}</span>
-            <span class="score-bar" aria-hidden="true">
-              <span class="score-bar-fill" style="width: {{ prospect.score }}%"></span>
-            </span>
-          </span>
-        </td>
+        <td class="num">{{ score_ring(prospect) }}</td>
 
         <td class="num">
           {% if prospect.review_count %}
@@ -133,6 +129,7 @@
               class="select select--sm"
               id="st-{{ prospect.id }}"
               name="status"
+              data-status-of="{{ prospect.id }}"
               hx-post="/hunter/prospects/{{ prospect.id }}/status"
               hx-include="closest form"
               hx-target="#prospect-results"
@@ -147,16 +144,57 @@
           </form>
         </td>
 
+        {#
+          Quick actions. Hidden until the row is hovered or something in it
+          takes focus - never hidden from the keyboard, which is why the
+          reveal is :focus-within and not :hover alone.
+        #}
         <td class="shrink">
-          <form
-            hx-post="/hunter/prospects/{{ prospect.id }}/do-not-contact"
-            hx-target="#prospect-results"
-            hx-swap="innerHTML"
-            hx-confirm="Tirar {{ prospect.name }} das listas para sempre?"
-          >
-            {{ filter_fields() }}
-            <button class="btn btn--danger btn--sm" type="submit">Não contatar</button>
-          </form>
+          <div class="row-actions">
+            <div class="quick">
+              {% if prospect.whatsapp_link %}
+              <a
+                class="icon-btn"
+                href="{{ prospect.whatsapp_link }}"
+                target="_blank"
+                rel="noopener"
+                title="Chamar no WhatsApp"
+                aria-label="Chamar {{ prospect.name }} no WhatsApp"
+                >zap</a
+              >
+              {% endif %}
+              <a
+                class="icon-btn"
+                href="{{ prospect.maps_link }}"
+                target="_blank"
+                rel="noopener"
+                title="Abrir no Google Maps"
+                aria-label="Abrir {{ prospect.name }} no Google Maps"
+                >maps</a
+              >
+              {% if prospect.whatsapp or prospect.phone %}
+              <button
+                class="icon-btn"
+                type="button"
+                data-copy-text="{{ prospect.whatsapp or prospect.phone }}"
+                title="Copiar o telefone"
+                aria-label="Copiar o telefone de {{ prospect.name }}"
+              >
+                tel
+              </button>
+              {% endif %}
+            </div>
+
+            <form
+              hx-post="/hunter/prospects/{{ prospect.id }}/do-not-contact"
+              hx-target="#prospect-results"
+              hx-swap="innerHTML"
+              hx-confirm="Tirar {{ prospect.name }} das listas para sempre?"
+            >
+              {{ filter_fields() }}
+              <button class="btn btn--danger btn--sm" type="submit">Não contatar</button>
+            </form>
+          </div>
         </td>
       </tr>
       {% endfor %}

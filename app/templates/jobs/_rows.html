@@ -1,4 +1,20 @@
-{# Fragmento HTMX: resumo por situação + tabela de jobs. #}
+{#
+  HTMX fragment: the per-status tally and the job table.
+
+  While something is running the fragment reloads itself every 5 seconds.
+  The poller is inside the fragment on purpose: when the queue drains, the
+  next response comes back without it and the polling stops by itself,
+  instead of hammering an idle queue all afternoon.
+#}
+{% set running = counts[statuses|selectattr('value', 'equalto', 'running')|first] if statuses else 0 %}
+<div
+  {% if running %}
+  hx-get="/admin/jobs?status={{ status }}&job_type={{ job_type }}"
+  hx-trigger="every 5s"
+  hx-target="#jobs-results"
+  hx-swap="innerHTML"
+  {% endif %}
+>
 <div class="tally">
   {% for item in statuses %}
   <span class="tally-item">
@@ -23,7 +39,7 @@
     </thead>
     <tbody>
       {% for job in jobs %}
-      <tr>
+      <tr data-job-id="{{ job.id }}" data-job-status="{{ job.status.value }}">
         <td>
           <span class="job-type">{{ job.type }}</span>
           <span class="entity-meta">{{ job.id }}</span>
@@ -82,3 +98,4 @@
   </div>
 </div>
 {% endif %}
+</div>

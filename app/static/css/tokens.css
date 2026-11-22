@@ -1,17 +1,24 @@
 /* ============================================================
-   TOKENS.CSS — Identidade visual Upside aplicada ao LeadHunter.
+   TOKENS.CSS — the Upside identity, applied to LeadHunter.
 
-   A paleta, as fontes e os arredondamentos vêm da identidade
-   publicada em upsidemkt.com.br (css/vars.css). Não invente
-   valores novos aqui: se a marca mudar, muda este arquivo.
+   The palette, the typefaces and the radii come from the identity
+   published at upsidemkt.com.br (css/vars.css). Do not invent
+   values here: if the brand changes, this file changes.
 
-   O bloco "aplicação" abaixo é o que o site não tem: superfícies
-   de dados, alturas de controle e a escala de espaçamento densa
-   que uma ferramenta de uso diário precisa.
+   Three layers, and the order matters:
+
+   1. The official palette and the brand constants. Never themed.
+   2. Application constants the brand does not have: spacing,
+      control heights, the type scale, motion.
+   3. The two themes. A theme only remaps *application* tokens -
+      surfaces, text, lines - never the palette itself. Components
+      must read those, so that one theme block switches the whole
+      app. A component that reaches for --paper-3 directly is a bug:
+      it will stay light when the app goes dark.
    ============================================================ */
 
 :root {
-  /* ── Paleta oficial ───────────────────────────────────── */
+  /* ── Official palette ─────────────────────────────────── */
   --ink: #16120d;
   --ink-soft: #241e18;
   --paper: #ede8e0;
@@ -23,15 +30,13 @@
   --areia: #d9c2a4;
   --pedra: #8c8174;
 
-  /* ── Textos ───────────────────────────────────────────── */
-  --text: #2a241d;
-  --text-muted: #5b5247;
+  /* ── Text on the two brand grounds ────────────────────── */
   --on-ink: #ede8e0;
   --on-ink-muted: #bcb3a6;
 
-  /* ── Linhas e bordas ──────────────────────────────────── */
-  --line: rgba(22, 18, 13, 0.14);
-  --line-soft: rgba(22, 18, 13, 0.08);
+  /* ── Lines on the two brand grounds ───────────────────── */
+  --line-paper: rgba(22, 18, 13, 0.14);
+  --line-paper-soft: rgba(22, 18, 13, 0.08);
   --line-ink: rgba(237, 232, 224, 0.16);
   --line-ink-soft: rgba(237, 232, 224, 0.08);
 
@@ -41,31 +46,26 @@
   --error-soft: rgba(178, 59, 46, 0.1);
   --success-soft: rgba(63, 125, 82, 0.12);
 
-  /* ── Arredondamentos (cantos discretos, nada de pílulas) ─ */
+  /* ── Radii (discreet corners, never pills) ────────────── */
   --radius-sm: 4px;
   --radius-md: 6px;
   --radius-lg: 8px;
 
-  /* ── Tipografia ───────────────────────────────────────── */
+  /* ── Typography ───────────────────────────────────────── */
   --font-heading: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --font-body: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   /* ============================================================
-     APLICAÇÃO — específico da ferramenta
+     APPLICATION — specific to the tool, the same in both themes
      ============================================================ */
 
-  /* Superfícies de dados */
-  --surface: var(--paper-3);
-  --surface-sunken: var(--paper-2);
-  --row-hover: rgba(184, 95, 64, 0.06);
-  --row-selected: var(--terracota-soft);
-
-  /* Cromo escuro: a barra lateral */
+  /* Dark chrome: the rail is ink in both themes. It is the frame
+     around the workspace, not part of it. */
   --rail-width: 232px;
   --rail-bg: var(--ink);
   --topbar-height: 60px;
 
-  /* Escala de espaçamento (densa: passo de 4px) */
+  /* Spacing scale (dense: 4px step) */
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -74,11 +74,11 @@
   --space-6: 2rem;
   --space-7: 3rem;
 
-  /* Controles */
+  /* Controls */
   --control-height: 38px;
   --control-height-sm: 32px;
 
-  /* Escala de texto da interface */
+  /* Interface type scale */
   --fs-micro: 0.7rem;
   --fs-small: 0.78rem;
   --fs-base: 0.875rem;
@@ -88,12 +88,143 @@
 
   --tracking-wide: 0.14em;
 
+  /* ── Motion ───────────────────────────────────────────────
+     Three durations and one curve, so everything that moves
+     moves alike. Anything slower than --dur-slow is the wrong
+     answer in a tool people use all day. */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 600ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* The technical grid behind the workspace: one line every
+     32px, so panels land on a rhythm the eye half-notices. */
+  --grid-size: 32px;
+}
+
+/* ============================================================
+   THEMES
+
+   Ink is the default, so :root already carries it: with
+   JavaScript off, or before theme.js runs, the app is dark and
+   nothing flashes. [data-theme="ink"] repeats it so the toggle
+   can switch back explicitly.
+
+   The ink surfaces are mixed from the palette rather than picked
+   by hand, which keeps them honest if the brand ever moves.
+   ============================================================ */
+
+:root,
+[data-theme="ink"] {
+  color-scheme: dark;
+
+  --app-bg: var(--ink);
+  --surface: color-mix(in srgb, var(--ink-soft) 88%, var(--paper));
+  --surface-sunken: var(--ink-soft);
+  --surface-raised: color-mix(in srgb, var(--ink-soft) 76%, var(--paper));
+
+  --heading: var(--paper);
+  --text: var(--on-ink);
+  --text-muted: var(--on-ink-muted);
+  /* The link and accent colour. terracota-dark is too close to the
+     ink ground to read here, so the accent is the full terracota:
+     4.22:1 against --ink. */
+  --accent-text: var(--terracota);
+  --success-text: #7fb894;
+  --error-text: #e08376;
+  /* The italic half of an editorial title. Sand reads straight off
+     the ink ground here. */
+  --title-accent: var(--areia);
+
+  --line: var(--line-ink);
+  --line-soft: var(--line-ink-soft);
+
+  --row-hover: rgba(184, 95, 64, 0.14);
+  --row-selected: rgba(184, 95, 64, 0.2);
+
+  --input-bg: color-mix(in srgb, var(--ink) 84%, var(--paper));
+  --input-bg-focus: color-mix(in srgb, var(--ink-soft) 72%, var(--paper));
+
+  /* The "strong" button: the one that inverts on hover. */
+  --control-strong: var(--on-ink);
+  --control-strong-ground: var(--ink);
+  --on-accent: var(--paper);
+
+  /* Depth: a hairline border, a top inset catching the light, and
+     a soft shadow. No glassmorphism in content areas. */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.22);
+  --inset-top: inset 0 1px 0 rgba(237, 232, 224, 0.04);
+  --grid-line: var(--line-ink-soft);
+  --glow-warm: radial-gradient(
+    60% 60% at 50% 0%,
+    rgba(184, 95, 64, 0.16) 0%,
+    rgba(184, 95, 64, 0.05) 45%,
+    transparent 72%
+  );
+
   /* ----------------------------------------------------------
-     GRÁFICOS
-     O terracota da marca para dinheiro. O azul é a única cor
-     fora da paleta: o verde da identidade reprova na validação
-     de daltonismo (protan ΔE 3,2 contra o terracota) e lê como
-     cinza. Este par passa nas seis checagens sobre o papel.
+     CHARTS, ink theme
+     Terracotta carries money, as it does everywhere else: 4.22:1
+     against --ink. Results need a colour that is not terracotta
+     under any eye, and the paper theme's #1f6fbf is too dark here
+     - only 1.16:1 against terracotta, so on a dark ground the two
+     series read as one. #6fb3e8 measures 8.25:1 against --ink,
+     1.96:1 against terracotta, and stays far from it when
+     simulated: deltaE 68.8 in protanopia, 82.5 in deuteranopia.
+  ---------------------------------------------------------- */
+  --chart-spend: #b85f40;
+  --chart-results: #6fb3e8;
+}
+
+[data-theme="paper"] {
+  color-scheme: light;
+
+  --app-bg: var(--paper);
+  --surface: var(--paper-3);
+  --surface-sunken: var(--paper-2);
+  --surface-raised: #ffffff;
+
+  --heading: var(--ink);
+  --text: #2a241d;
+  --text-muted: #5b5247;
+  --accent-text: var(--terracota-dark);
+  --success-text: #2c5a3a;
+  --error-text: var(--error);
+  /* Sand on paper is nearly invisible, so the same accent is mixed
+     down towards ink until it carries on a light ground. */
+  --title-accent: color-mix(in srgb, var(--areia) 55%, var(--ink));
+
+  --line: var(--line-paper);
+  --line-soft: var(--line-paper-soft);
+
+  --row-hover: rgba(184, 95, 64, 0.06);
+  --row-selected: var(--terracota-soft);
+
+  --input-bg: var(--paper-3);
+  --input-bg-focus: #ffffff;
+
+  --control-strong: var(--ink);
+  --control-strong-ground: var(--paper);
+  --on-accent: var(--paper);
+
+  /* The identity separates surfaces with a hairline, not a blur,
+     so on paper the shadow is barely there. */
+  --shadow-card: 0 1px 2px rgba(22, 18, 13, 0.04);
+  --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --grid-line: var(--line-paper-soft);
+  --glow-warm: radial-gradient(
+    60% 60% at 50% 0%,
+    rgba(184, 95, 64, 0.08) 0%,
+    rgba(184, 95, 64, 0.03) 45%,
+    transparent 72%
+  );
+
+  /* ----------------------------------------------------------
+     CHARTS, paper theme
+     The brand terracotta for money. The blue is the one colour
+     outside the palette: the identity's green fails the
+     colour-blindness check against terracotta (protan deltaE 3.2)
+     and reads as grey. This pair passes all six checks on paper.
   ---------------------------------------------------------- */
   --chart-spend: #b85f40;
   --chart-results: #1f6fbf;

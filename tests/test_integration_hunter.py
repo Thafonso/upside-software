@@ -487,7 +487,10 @@ async def test_finished_search_stops_polling_and_shows_results(
     await _run_queue()
 
     detail = await client.get(detail_url)
-    assert "2 empresas encontradas" in detail.text
+    # The total sits in its own element so it can count up on arrival, so
+    # the sentence is no longer one run of text.
+    assert 'data-count="2"' in detail.text
+    assert "empresas encontradas" in detail.text
     assert "Padaria Central" in detail.text
     assert "Café du Centre" in detail.text
     # Nothing left to wait for, so the polling attribute is gone.

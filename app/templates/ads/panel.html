@@ -1,4 +1,5 @@
-{% extends "base.html" %} {% block title %}Anúncios{% endblock %} {% block
+{% extends "base.html" %} {% from "_components/spark.html" import sparkline %}
+{% block title %}Anúncios{% endblock %} {% block
 content %}
 <header class="page-head">
   <div>
@@ -23,6 +24,7 @@ content %}
     <thead>
       <tr>
         <th scope="col">Cliente</th>
+        <th scope="col" class="col-spark">No período</th>
         <th scope="col" class="num">Investimento</th>
         <th scope="col" class="num">Resultados</th>
         <th scope="col" class="num">Custo por resultado</th>
@@ -41,10 +43,26 @@ content %}
             {{ row.account_ids|length }} conta{{ '' if row.account_ids|length == 1 else 's' }}
           </span>
         </td>
+        <td class="col-spark">
+          {{ sparkline(row.series | map(attribute='spend') | map('float') | list,
+                       'Investimento de ' ~ row.client_name ~ ' no período') }}
+        </td>
         <td class="num">{{ row.totals.spend|brl }}</td>
         <td class="num">{{ row.totals.results|num }}</td>
         <td class="num">
-          {% if row.totals.cost_per_result %}{{ row.totals.cost_per_result|brl }}
+          {% if row.totals.cost_per_result %}
+          {{ row.totals.cost_per_result|brl }}
+          {#
+            How this client's cost per result sits against the most
+            expensive one on screen. A number alone says little; the bar
+            says "worst on the list" at a glance.
+          #}
+          <span class="ratio" aria-hidden="true">
+            <span
+              class="ratio-fill"
+              style="width: {{ (row.totals.cost_per_result / worst_cost * 100)|round|int if worst_cost else 0 }}%"
+            ></span>
+          </span>
           {% else %}<span class="muted">—</span>{% endif %}
         </td>
         <td class="num">{{ row.totals.link_clicks|num }}</td>

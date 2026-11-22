@@ -59,24 +59,29 @@ content %}
     </select>
   </div>
 
+  {#
+    Toggle chips. Still plain checkboxes underneath, so the same query
+    parameters go out, the keyboard works as it always did and the state
+    survives with CSS off - the chip is a label wearing a border.
+  #}
   <fieldset class="field checks">
     <legend>Sinais</legend>
-    <label class="check">
-      <input type="checkbox" name="no_website" value="1" {% if filters.no_website %}checked{% endif %} />
-      <span>Sem site</span>
+    {% for name, label in [
+      ('no_website', 'Sem site'),
+      ('social_only', 'Só rede social'),
+      ('has_whatsapp', 'WhatsApp'),
+      ('has_email', 'Com e-mail'),
+    ] %}
+    <label class="chip">
+      <input
+        type="checkbox"
+        name="{{ name }}"
+        value="1"
+        {% if filters[name] %}checked{% endif %}
+      />
+      <span>{{ label }}</span>
     </label>
-    <label class="check">
-      <input type="checkbox" name="social_only" value="1" {% if filters.social_only %}checked{% endif %} />
-      <span>Só rede social</span>
-    </label>
-    <label class="check">
-      <input type="checkbox" name="has_whatsapp" value="1" {% if filters.has_whatsapp %}checked{% endif %} />
-      <span>WhatsApp</span>
-    </label>
-    <label class="check">
-      <input type="checkbox" name="has_email" value="1" {% if filters.has_email %}checked{% endif %} />
-      <span>Com e-mail</span>
-    </label>
+    {% endfor %}
   </fieldset>
 </form>
 

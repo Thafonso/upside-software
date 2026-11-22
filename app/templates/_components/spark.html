@@ -1,0 +1,68 @@
+{#
+  A sparkline, drawn on the server.
+
+  No JavaScript: the shape is as static as the number beside it, and a
+  reader with scripts blocked should still see it. The viewBox is a fixed
+  100x30 grid and the SVG scales to its box, so one macro serves a card and
+  a table row without either of them knowing the pixel size.
+
+  `points` is a list of numbers already in the order they happened.
+#}
+
+{% macro sparkline(points, label='', kind='spend') %}
+  {%- set values = points | list -%}
+  {%- if values | length > 1 -%}
+    {%- set top = values | max -%}
+    {%- set floor = values | min -%}
+    {%- set span = (top - floor) if (top - floor) > 0 else 1 -%}
+    {%- set step = 100 / (values | length - 1) -%}
+    {%- set ns = namespace(line='', area='') -%}
+    {%- for value in values -%}
+      {%- set x = '%.2f' | format(loop.index0 * step) -%}
+      {#- Two units of padding top and bottom, so a peak is not clipped. -#}
+      {%- set y = '%.2f' | format(28 - ((value - floor) / span * 26)) -%}
+      {%- set ns.line = ns.line ~ (' ' if not loop.first else '') ~ x ~ ',' ~ y -%}
+    {%- endfor -%}
+<svg
+  class="spark spark--{{ kind }}"
+  viewBox="0 0 100 30"
+  preserveAspectRatio="none"
+  role="img"
+  aria-label="{{ label or 'Variação do período' }}"
+>
+  <polygon class="spark-area" points="0,30 {{ ns.line }} 100,30" />
+  <polyline class="spark-line" points="{{ ns.line }}" />
+</svg>
+  {%- else -%}
+<span class="spark spark--empty" aria-hidden="true"></span>
+  {%- endif -%}
+{% endmacro %}
+
+
+{#
+  The change against the previous period. Colour follows `is_good`, never
+  the direction, and the arrow is always backed by a sign and a word, so
+  the meaning survives in greyscale and for a screen reader.
+#}
+{% macro delta(change, suffix='que o período anterior') %}
+  {%- set percent = change.percent -%}
+  {%- if percent is none -%}
+    <span class="delta">sem base de comparação</span>
+  {%- else -%}
+    {%- if change.is_good is none -%}
+      {%- set tone = 'delta--flat' -%}
+    {%- elif change.is_good -%}
+      {%- set tone = 'delta--good' -%}
+    {%- else -%}
+      {%- set tone = 'delta--bad' -%}
+    {%- endif -%}
+    {%- set word = 'a mais' if percent > 0 else ('a menos' if percent < 0 else 'igual') -%}
+    <span class="delta {{ tone }}">
+      <span class="delta-arrow" aria-hidden="true">
+        {{ '▲' if percent > 0 else ('▼' if percent < 0 else '=') }}
+      </span>
+      {{- '+' if percent > 0 else '' }}{{ percent|pct_br }}
+      <span class="sr-only">{{ word }} {{ suffix }}</span>
+    </span>
+  {%- endif -%}
+{% endmacro %}
